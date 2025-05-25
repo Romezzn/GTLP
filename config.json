@@ -1,0 +1,125 @@
+{
+  // === MAPA Y ZONAS ===
+  "tileWidth": 64,
+  "tileHeight": 32,
+  "gridWidth": 48,
+  "gridHeight": 48,
+
+  "zonas": [
+    { "nombre": "Parque", "emoji": "🏞️", "id": "parque", "fromX": 2, "fromY": 2, "toX": 15, "toY": 15, "color": "#5b8c37" },
+    { "nombre": "Restaurante", "emoji": "🍽️", "id": "restaurante", "fromX": 20, "fromY": 2, "toX": 29, "toY": 9, "color": "#e0a040" },
+    { "nombre": "Hospital", "emoji": "🏥", "id": "hospital", "fromX": 33, "fromY": 2, "toX": 44, "toY": 10, "color": "#b3c7e6" },
+    { "nombre": "Casa", "emoji": "🏠", "id": "casa", "fromX": 8, "fromY": 20, "toX": 18, "toY": 28, "color": "#c1a87d" },
+    { "nombre": "Trabajo", "emoji": "🏢", "id": "trabajo", "fromX": 34, "fromY": 22, "toX": 44, "toY": 28, "color": "#aaa" },
+    { "nombre": "Gimnasio", "emoji": "🏋️", "id": "gimnasio", "fromX": 19, "fromY": 32, "toX": 28, "toY": 40, "color": "#99bbff" }
+  ],
+
+  // === OBJETOS ===
+  "objetos": [
+    { "id": "pelota",        "name": "Pelota",        "icon": "⚽", "zona": "parque",      "pos": { "x": 5,  "y": 5  } },
+    { "id": "arbol",         "name": "Árbol de comida","icon": "🌳", "zona": "restaurante","pos": { "x": 25, "y": 5  } },
+    { "id": "medikit",       "name": "Botiquín",      "icon": "💊", "zona": "hospital",    "pos": { "x": 40, "y": 5  } },
+    { "id": "psicologo",     "name": "Psicólogo",     "icon": "🧑‍⚕️","zona": "hospital",    "pos": { "x": 42, "y": 7  } },
+    { "id": "banera",        "name": "Bañera",        "icon": "🛁",  "zona": "casa",        "pos": { "x": 10, "y": 25 } },
+    { "id": "comida-casa",   "name": "Comida en casa","icon": "🍲",  "zona": "casa",        "pos": { "x": 12, "y": 22 } },
+    { "id": "chocolate",     "name": "Chocolate",     "icon": "🍫",  "zona": "restaurante", "pos": { "x": 27, "y": 6  } },
+    { "id": "libro",         "name": "Libro",         "icon": "📖",  "zona": "casa",        "pos": { "x": 15, "y": 27 } },
+    { "id": "puesto-trabajo","name": "Puesto de trabajo", "icon": "💼", "zona": "trabajo", "pos": { "x": 39, "y": 25 } },
+    { "id": "gimnasio",      "name": "Gimnasio",      "icon": "🏋️",  "zona": "gimnasio",   "pos": { "x": 23, "y": 36 } },
+    { "id": "cama",          "name": "Cama",          "icon": "🛏️",  "zona": "casa",       "pos": { "x": 14, "y": 26 } }
+  ],
+
+  // === TIEMPOS ===
+  "segundo": 1000,
+  "minuto": 60000,
+  "turno": 60000,
+  "gameTick": 500,
+  "ticksPerTurn": 120,
+
+  // === PARÁMETROS DE JUEGO ===
+  "inactividadMs": 5000,
+  "cooldowns": {
+    "pelota":      5,
+    "arbol":       6,
+    "medikit":     8,
+    "psicologo":  20,
+    "banera":      4,
+    "comida-casa": 6,
+    "chocolate":  10,
+    "libro":       7,
+    "puesto-trabajo": 1,
+    "gimnasio":     4,
+    "cama":         8
+  },
+
+  // === EFECTOS DE OBJETOS Y CRIS ===
+  "efectos": {
+    "pelota":       { "felicidad": 15 },
+    "arbol":        { "hambre": -25, "energia": 10 },
+    "medikit":      { "saludFisica": 20, "saludMental": 10 },
+    "psicologo":    { "saludMental": 25, "confianza": 10 },
+    "banera":       { "felicidad": 10, "saludMental": 15 },
+    "comida-casa":  { "hambre": -18, "energia": 5 },
+    "chocolate":    { "felicidad": 50 },
+    "libro":        { "confianza": 10, "felicidad": 5 },
+    "puesto-trabajo": {},
+    "gimnasio":     { "saludFisica": 18, "saludMental": 13, "energia": -20, "ansiedad": -16 },
+    "cama":         { "energia": 100 },
+    "cris-visita":  { "ansiedad": -30, "saludMental": 18 },
+    "cris-llamada": { "ansiedad": -9,  "saludMental": 5 },
+    "musica":       { "felicidad": 16, "ansiedad": -10, "saludMental": 7 }
+  },
+
+  // === MODIFICADORES PROGRESIVOS POR ZONA ===
+  "modificadoresZona": {
+    "calle":      { "saludMental": -0.19, "ansiedad": 0.18 },
+    "trabajo":    { "energia": -0.09, "saludMental": -0.04, "ansiedad": -0.15 },
+    "parque":     { "felicidad": 0.11, "ansiedad": -0.14 }
+  },
+  "modificadoresGlobales": {
+    "hambre": 0.12,
+    "energia": -0.16,
+    "felicidad": -0.04
+  },
+
+  // === REGLAS DE TRABAJO/PSICÓLOGO ===
+  "psicologoMinDias": 20,
+  // 1 = Lunes, 7 = Domingo
+  "trabajoDias": [1,2,3,4,5],
+
+  // === ESTADO INICIAL DEL PERSONAJE ===
+  "personaje": {
+    "id": "Tamago",
+    "nombre": "Tamago",
+    "personalidad": "sensible",
+    "stats": {
+      "hambre": 80,
+      "felicidad": 60,
+      "energia": 75,
+      "confianza": 60,
+      "saludFisica": 100,
+      "saludMental": 90
+    },
+    "vinculo": 60,
+    "tlpActivo": false,
+    "estadoEmocional": "feliz",
+    "posicion": { "x": 8, "y": 8 }
+  },
+
+  // === VISITAS DE CRIS ===
+  "cris": {
+    "nombre": "Cris",
+    "emoji": "😄",
+    "aparicionMin": 5,
+    "aparicionMax": 5,
+    "duracionVisitaDias": 1,
+    "llamadaCooldown": 1
+  },
+
+  // === VISUAL Y ZOOM ===
+  "zoomMin": 0.5,
+  "zoomMax": 2.2,
+  "zoomStep": 0.18,
+  "canvasOffsetX": 800,
+  "canvasOffsetY": 140
+}

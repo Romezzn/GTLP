@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Tamagotchi TLP</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    body { background:#23242a; color:#eee; font-family:sans-serif; margin:0; padding:0;}
+    #main { display:flex; flex-direction:row; align-items: flex-start; }
+    #canvas { background: #32343d; margin: 18px 0 18px 18px; border-radius:18px; box-shadow:0 2px 18px #0009; outline:none; }
+    #sidepanel { margin:18px 0 0 18px; min-width:340px; max-width:400px; }
+    .criatura { background:#222a; border-radius:8px; margin-bottom:12px; padding:12px; border:2px solid #444; }
+    .criatura.selected { border:2px solid #4c9afe; background:#2b3650aa; }
+    .stat-bar { height:16px; background:#3335; border-radius:7px; margin:4px 0 3px 0; position:relative;}
+    .stat-fill { position:absolute; left:0; top:0; height:16px; border-radius:7px; }
+    .stat-text { position:absolute; left:10px; top:0; font-size:13px; color:#fff; }
+    .ascii { font-family:monospace; margin:0; font-size:1.1em; color:#fff; background:none;}
+    #event-log { height:120px; overflow-y:auto; background:#181a23; padding:8px 10px; border-radius:7px; font-size:0.96em; margin:12px 0;}
+    .log-msg.good {color:#82ff90;}
+    .log-msg.warn {color:#ffb326;}
+    .log-msg.emo {color:#92d0ff;}
+    .log-msg {margin-bottom:3px;}
+    #main-controls { margin:12px 0 0 0; }
+    #mobile-controls { display: none; }
+    @media (max-width:900px) {
+      #main { flex-direction:column; }
+      #sidepanel { margin:0 0 0 0; min-width:unset; max-width:unset; }
+      #canvas { margin: 10px auto; display:block; }
+    }
+  </style>
+</head>
+<body>
+  <div id="main">
+    <canvas id="canvas" width="2300" height="1700" tabindex="0"></canvas>
+    <div id="sidepanel">
+      <h2>Tamagotchi TLP</h2>
+      <div id="criaturasPanel"></div>
+      <div id="main-controls">
+        <b>Turno:</b> <span id="turnoNum">0</span>
+        <button onclick="crearNuevaPartida()">Nueva partida</button>
+      </div>
+      <div id="event-log"></div>
+      <div style="margin-top:16px; font-size:0.93em; color:#8af;">
+        <p>Cuida de tu criatura. Si dejas de interactuar más de 5 segundos, perderá confianza y vínculo rápidamente.<br>
+        Cada minuto se pasa un turno automáticamente.<br>
+        Usa el mapa para mover tu criatura y explorar las zonas.</p>
+      </div>
+    </div>
+  </div>
+  <!-- Controles móviles se añaden por JS -->
+
+  <!-- Sonidos opcionales (puedes poner archivos vacíos si no los necesitas) -->
+  <audio id="moveSfx" src="move.wav"></audio>
+  <audio id="okSfx" src="ok.wav"></audio>
+  <audio id="errSfx" src="err.wav"></audio>
+
+  <!-- Script principal -->
+  <script src="game.js"></script>
+</body>
+</html>
