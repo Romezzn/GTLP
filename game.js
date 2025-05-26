@@ -83,6 +83,8 @@ function getGameDateTime() {
 
 // === EVENTOS ALEATORIOS ===
 function triggerRandomEvent(zonaId, c) {
+  // Solo activar si está permitido en config
+  if (!CONFIG.enableRandomEvents) return false;
   let triggered = false;
   for (let k in CONFIG.eventos) {
     let ev = CONFIG.eventos[k];
@@ -101,6 +103,9 @@ function triggerRandomEvent(zonaId, c) {
 
 // === MUERTE / GAME OVER ===
 function checkMuerte(c) {
+  // Solo verificar muerte si eventos normales están permitidos
+  if (!CONFIG.enableNormalEvents) return false;
+
   if (c.stats.hambre >= 100) {
     logMsg("¡Has muerto de hambre! 💀", "warn");
     endGame("hambre");
@@ -247,6 +252,8 @@ class Criatura {
     this.clampStats();
   }
   actualizarEstadoTurno() {
+    if (!CONFIG.enableNormalEvents) return; // Solo aplicar lógica si eventos normales están permitidos
+
     this.stats.confianza = clamp(this.stats.confianza + (CONFIG.turnoConfianza || 10), 0, 100);
     this.vinculo = clamp((this.vinculo || 0) + (CONFIG.turnoVinculo || 10), 0, 100);
     let mejora = Math.floor((this.stats.confianza + (this.vinculo || 0)) / 20);
