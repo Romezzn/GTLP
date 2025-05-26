@@ -69,7 +69,7 @@
   "modificadoresGlobales": {
     "hambre": 0.12,
     "energia": -0.16,
-    "felicidad": -0.24,
+    "felicidad": -0.24
   },
   "psicologoMinDias": 20,
   "trabajoDias": [1, 2, 3, 4, 5],
