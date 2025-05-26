@@ -367,7 +367,7 @@ function renderLog() {
       min-height:54px;
       z-index:200;
       display:flex;
-      flex-direction:column-reverse;
+      flex-direction:column;
       overflow-y:auto;
       padding:0;
       pointer-events:auto;
@@ -384,7 +384,7 @@ function renderLog() {
       e.preventDefault();
     }, { passive: false });
   }
-  let visibleCount = 12;
+  let visibleCount = 3;
   let logsToShow = eventLog.slice(-visibleCount - eventLogScroll, eventLog.length - eventLogScroll);
   eventLogDiv.innerHTML = logsToShow.map((e, idx) => {
     let alpha;
