@@ -101,6 +101,7 @@ function llamarACris() {
   let efecto = getEfectoById("cris-llamada");
   c.ansiedad = clamp(c.ansiedad + (efecto.ansiedad || 0), 0, 100);
   c.stats.saludMental = clamp(c.stats.saludMental + (efecto.saludMental || 0), 0, 100);
+  c.stats.felicidad = clamp(c.stats.felicidad + (efecto.felicidad || 0), 0, 100);
   logMsg("Has llamado a Cris. Conversaron y te sientes mejor.", "good");
   actualizarUI();
 }
@@ -170,6 +171,13 @@ class Criatura {
       let mentalPenalty = Math.floor(this.ansiedad / 10);
       this.stats.saludMental = clamp(this.stats.saludMental - mentalPenalty, 0, 100);
     }
+    // --- AJUSTE: Si ansiedad > UMBRAL, felicidad baja rápido (valores del JSON)
+    if (this.ansiedad > (CONFIG.felicidadAnsiedadUmbral ?? 50)) {
+      this.stats.felicidad = clamp(
+        this.stats.felicidad - (CONFIG.felicidadAnsiedadDecaimiento ?? 12),
+        0, 100
+      );
+    }
     if (this.ansiedad > 0) this.ansiedad -= 7;
     if (this.stats.felicidad > 70) this.estadoEmocional = 'feliz';
     else if (this.stats.felicidad < 30) this.estadoEmocional = 'triste';
@@ -192,8 +200,9 @@ class Criatura {
     if (!this.puedeVisitarPsicologo()) { logMsg("¡Debes esperar 20 días entre visitas al psicólogo!", "warn"); return false; }
     if (this.stats.saludMental >= 100 && this.stats.confianza >= 100) { logMsg("No necesitas al psicólogo ahora.", "warn"); return false; }
     let efecto = getEfectoById("psicologo");
-    this.stats.saludMental = clamp(this.stats.saludMental + efecto.saludMental, 0, 100);
-    this.stats.confianza = clamp(this.stats.confianza + efecto.confianza, 0, 100);
+    this.stats.saludMental = clamp(this.stats.saludMental + (efecto.saludMental || 0), 0, 100);
+    this.stats.confianza = clamp(this.stats.confianza + (efecto.confianza || 0), 0, 100);
+    this.ansiedad = clamp(this.ansiedad + (efecto.ansiedad || 0), 0, 100);
     this.lastPsicologoTurn = turno;
     this.cooldowns.psicologo = CONFIG.cooldowns.psicologo * CONFIG.turno;
     logMsg("Has visitado al psicólogo.", "good");
@@ -205,10 +214,11 @@ class Criatura {
   }
   visitarTrabajo() {
     if (!this.puedeVisitarTrabajo()) return false;
+    let efecto = getEfectoById("puesto-trabajo");
+    this.ansiedad = clamp(this.ansiedad + (efecto.ansiedad || 0), 0, 100);
     this.stats.energia = clamp(this.stats.energia - 8, 0, 100);
     this.stats.saludMental = clamp(this.stats.saludMental - 6, 0, 100);
     this.stats.felicidad = clamp(this.stats.felicidad + 7, 0, 100);
-    this.ansiedad = clamp(this.ansiedad - 18, 0, 100);
     this.lastTrabajoTurn = turno;
     logMsg("Has ido al trabajo.", "good");
     return true;
@@ -312,6 +322,13 @@ function usarObjeto(c, obj, mostrarMsg = true) {
     else if (k === "saludFisica") c.stats.saludFisica = clamp(c.stats.saludFisica + efecto[k], 0, 100);
     else if (k === "saludMental") c.stats.saludMental = clamp(c.stats.saludMental + efecto[k], 0, 100);
     else if (k === "ansiedad") c.ansiedad = clamp(c.ansiedad + efecto[k], 0, 100);
+  }
+  // --- AJUSTE: rebaja de ansiedad extra por acción (excepto trabajo y psicólogo)
+  if (obj.id !== "puesto-trabajo" && obj.id !== "psicologo" && CONFIG.accionRebajaAnsiedad) {
+    c.ansiedad = clamp(
+      c.ansiedad - randomInt(CONFIG.accionRebajaAnsiedad.min, CONFIG.accionRebajaAnsiedad.max),
+      0, 100
+    );
   }
   c.cooldowns[obj.id] = (CONFIG.cooldowns[obj.id] || 5) * (["psicologo"].includes(obj.id) ? CONFIG.turno : CONFIG.minuto);
   if (mostrarMsg) logMsg("Has usado " + obj.name + ".", "good");
