@@ -610,13 +610,46 @@ function renderObjetosInteractivos() {
     // Acción de click
     button.onclick = () => {
       if (estado !== "idle") return;
-      objetoEstado[obj.id] = "inprogress";
-      renderObjetosInteractivos();
-      // Asigna path al objeto para ir hacia él; la acción real se realiza al llegar
       let c = criaturas[0];
-      c.path = findPath(c.posicion, obj.pos);
-      c.pathObjTarget = obj;
-    };
+      // Si ya está en la casilla del objeto, ejecutar al momento
+      if (c.posicion.x === obj.pos.x && c.posicion.y === obj.pos.y) {
+        objetoEstado[obj.id] = "inprogress";
+        renderObjetosInteractivos();
+        setTimeout(() => {
+          if (puedeUsarObjeto(c, obj)) {
+            let ok = usarObjeto(c, obj, true);
+            if (ok) {
+              objetoEstado[obj.id] = "done";
+              renderObjetosInteractivos();
+              setTimeout(() => {
+                objetoEstado[obj.id] = undefined;
+                renderObjetosInteractivos();
+              }, 2000);
+            } else {
+              objetoEstado[obj.id] = "blocked";
+              renderObjetosInteractivos();
+              setTimeout(() => {
+                objetoEstado[obj.id] = undefined;
+                renderObjetosInteractivos();
+              }, 1500);
+            }
+          } else {
+            objetoEstado[obj.id] = "blocked";
+            renderObjetosInteractivos();
+            setTimeout(() => {
+              objetoEstado[obj.id] = undefined;
+              renderObjetosInteractivos();
+            }, 1500);
+          }
+        }, 350);
+        return;
+      }
+  // Si no, programar el movimiento normal
+  objetoEstado[obj.id] = "inprogress";
+  renderObjetosInteractivos();
+  c.path = findPath(c.posicion, obj.pos);
+  c.pathObjTarget = obj;
+};
 
     // Adjuntar al panel
     panel.appendChild(button);
