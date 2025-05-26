@@ -168,25 +168,33 @@ class Criatura {
   }
 
   actualizarEstadoProgresivo(dt) {
+    // Aplica modificadores globales y de zona para TODOS los stats, incluyendo ansiedad
     for (const stat in CONFIG.modificadoresGlobales) {
-      this.stats[stat] += CONFIG.modificadoresGlobales[stat] * dt;
+      if (stat === "ansiedad") this.ansiedad += CONFIG.modificadoresGlobales[stat] * dt;
+      else if (this.stats[stat] !== undefined)
+        this.stats[stat] += CONFIG.modificadoresGlobales[stat] * dt;
     }
     let zona = getZona(this.posicion.x, this.posicion.y);
     let modZ = CONFIG.modificadoresZona[zona.id];
     if (modZ) for (const stat in modZ)
       if (stat === "ansiedad") this.ansiedad += modZ[stat] * dt;
-      else this.stats[stat] += modZ[stat] * dt;
+      else if (this.stats[stat] !== undefined)
+        this.stats[stat] += modZ[stat] * dt;
     this.clampStats();
   }
 
   actualizarEstadoTurno() {
-    this.stats.confianza = clamp(this.stats.confianza + 10, 0, 100);
-    this.vinculo = clamp((this.vinculo || 0) + 10, 0, 100);
+    this.stats.confianza = clamp(this.stats.confianza + (CONFIG.turnoConfianza || 10), 0, 100);
+    this.vinculo = clamp((this.vinculo || 0) + (CONFIG.turnoVinculo || 10), 0, 100);
     let mejora = Math.floor((this.stats.confianza + (this.vinculo || 0)) / 20);
     this.stats.saludMental = clamp(this.stats.saludMental + mejora, 0, 100);
+
     let fecha = getGameDateTime();
-    if (fecha.weekDay >= 1 && fecha.weekDay <= 5 && (!this.lastTrabajoTurn || this.lastTrabajoTurn !== turno - 1)) {
-      this.ansiedad = clamp((this.ansiedad || 0) + 18, 0, 100);
+    if (
+      fecha.weekDay >= 1 && fecha.weekDay <= 5 &&
+      (!this.lastTrabajoTurn || this.lastTrabajoTurn !== turno - 1)
+    ) {
+      this.ansiedad = clamp((this.ansiedad || 0) + (CONFIG.trabajoNoHechoAnsiedad || 18), 0, 100);
       logMsg("Te has saltado el trabajo: sube la ansiedad.", "warn");
     }
     if (this.ansiedad > 0) {
@@ -200,7 +208,8 @@ class Criatura {
         0, 100
       );
     }
-    if (this.ansiedad > 0) this.ansiedad -= 7;
+    // Decaimiento por turno (parametrizable)
+    if (this.ansiedad > 0) this.ansiedad -= (CONFIG.turnoAnsiedadRebaja || 7);
     if (this.stats.felicidad > 70) this.estadoEmocional = 'feliz';
     else if (this.stats.felicidad < 30) this.estadoEmocional = 'triste';
     else this.estadoEmocional = 'feliz';
@@ -238,9 +247,9 @@ class Criatura {
     if (!this.puedeVisitarTrabajo()) return false;
     let efecto = getEfectoById("puesto-trabajo");
     this.ansiedad = clamp(this.ansiedad + (efecto.ansiedad || 0), 0, 100);
-    this.stats.energia = clamp(this.stats.energia - 8, 0, 100);
-    this.stats.saludMental = clamp(this.stats.saludMental - 6, 0, 100);
-    this.stats.felicidad = clamp(this.stats.felicidad + 7, 0, 100);
+    this.stats.energia = clamp(this.stats.energia + (efecto.energia || -8), 0, 100);
+    this.stats.saludMental = clamp(this.stats.saludMental + (efecto.saludMental || -6), 0, 100);
+    this.stats.felicidad = clamp(this.stats.felicidad + (efecto.felicidad || 7), 0, 100);
     this.lastTrabajoTurn = turno;
     logMsg("Has ido al trabajo.", "good");
     return true;
