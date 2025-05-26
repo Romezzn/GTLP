@@ -1,3 +1,5 @@
+// version revisada: eventos aleatorios, pathfinding, depresión, TLP activo, muerte y render HD
+
 // === SISTEMA DE CONFIGURACIÓN Y UTILIDAD ===
 let CONFIG = {};
 async function loadConfig() {
@@ -18,14 +20,14 @@ function getObjById(id) {
 function getEfectoById(id) {
   return CONFIG.efectos[id] || {};
 }
-function pad(n) { return n < 10 ? ("0" + n) : "" + n; }
 function clamp(num, min, max) { return Math.min(Math.max(num, min), max); }
 function randomInt(a, b) { return Math.floor(Math.random() * (b - a + 1)) + a; }
 function inBounds(x, y) { return x >= 0 && y >= 0 && x < CONFIG.gridWidth && y < CONFIG.gridHeight; }
+function shuffle(arr) { for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; }
 
 // === ESTADO GLOBAL ===
 let criaturas = [], turno = 0, currentTick = 0, eventLog = [];
-let ultimaAccion = Date.now(), zoom = 1.0, tileWidth, tileHeight, selected = 0;
+let ultimaAccion = Date.now(), zoom = 1.0, tileWidth, tileHeight;
 let canvas, ctx;
 let eventLogScroll = 0;
 
@@ -35,6 +37,30 @@ let crisOnMap = false;
 let crisTurnoFinaliza = -1;
 let crisPos = null;
 let crisLlamadaUltima = -1000;
+
+// === PATHFINDING: BFS simple para moverse por el mapa ===
+function findPath(from, to) {
+  if (from.x === to.x && from.y === to.y) return [];
+  let queue = [{ x: from.x, y: from.y, path: [] }];
+  let visited = Array(CONFIG.gridWidth).fill(0).map(() => Array(CONFIG.gridHeight).fill(false));
+  visited[from.x][from.y] = true;
+  let dirs = [
+    { x: 1, y: 0 }, { x: -1, y: 0 }, { x: 0, y: 1 }, { x: 0, y: -1 }
+  ];
+  while (queue.length) {
+    let { x, y, path } = queue.shift();
+    for (let d of dirs) {
+      let nx = x + d.x, ny = y + d.y;
+      if (inBounds(nx, ny) && !visited[nx][ny]) {
+        let newPath = path.concat([{ x: nx, y: ny }]);
+        if (nx === to.x && ny === to.y) return newPath;
+        visited[nx][ny] = true;
+        queue.push({ x: nx, y: ny, path: newPath });
+      }
+    }
+  }
+  return [];
+}
 
 // === FECHA Y TIEMPO DE JUEGO ===
 const WEEK_DAYS = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
@@ -54,15 +80,62 @@ function getGameDateTime() {
     jsDay: dayOfWeek
   };
 }
-function esFinDeSemana(weekDay) {
-  return weekDay === 6 || weekDay === 7;
+
+// === EVENTOS ALEATORIOS ===
+function triggerRandomEvent(zonaId, c) {
+  let triggered = false;
+  for (let k in CONFIG.eventos) {
+    let ev = CONFIG.eventos[k];
+    if (ev.zonas.includes(zonaId) && Math.random() < ev.prob) {
+      let ef = getEfectoById(ev.efecto);
+      for (let st in ef) {
+        if (st in c.stats) c.stats[st] = clamp(c.stats[st] + ef[st], 0, 100);
+        else if (st === "ansiedad") c.ansiedad = clamp(c.ansiedad + ef[st], 0, 100);
+      }
+      logMsg(ev.msg, "warn");
+      triggered = true;
+    }
+  }
+  return triggered;
+}
+
+// === MUERTE / GAME OVER ===
+function checkMuerte(c) {
+  if (c.stats.hambre >= 100) {
+    logMsg("¡Has muerto de hambre! 💀", "warn");
+    endGame("hambre");
+    return true;
+  }
+  if (c.stats.depresion >= 100) {
+    logMsg("¡Has muerto por suicidio (depresión)! 💀", "warn");
+    endGame("suicidio");
+    return true;
+  }
+  if (c.stats.saludFisica <= 0) {
+    logMsg("¡Has muerto por salud física muy baja! 💀", "warn");
+    endGame("saludFisica");
+    return true;
+  }
+  // Atropello: probabilidad si está en la calle y ansiedad muy alta
+  if (getZona(c.posicion.x, c.posicion.y).id === "calle" && c.ansiedad > 90 && Math.random() < 0.06) {
+    logMsg("¡Has muerto atropellado! 💀", "warn");
+    endGame("atropello");
+    return true;
+  }
+  return false;
+}
+function endGame(tipo) {
+  setTimeout(() => {
+    alert("Juego terminado por: " + tipo + ". Recarga la página para volver a empezar.");
+    window.location.reload();
+  }, 900);
 }
 
 // === CRIS: GESTIÓN DE VISITAS ALEATORIAS ===
 function planificarVisitasCris() {
   let daysInMonth = 30;
   let days = [];
-  let min = CONFIG.cris.aparicionMin, max = CONFIG.cris.aparicionMax;
+  let min = CONFIG.cris.aparicionMin;
   while (days.length < min) {
     let r = randomInt(1, daysInMonth);
     if (!days.includes(r)) days.push(r);
@@ -126,8 +199,10 @@ function getEstadoEmoji(c) {
   const f = c.stats.felicidad;
   const a = c.ansiedad;
   const m = c.stats.saludMental;
+  const d = c.stats.depresion;
   if (c.estadoEmocional === 'enCrisis' || (a > 85 && m < 40)) return "🥵";
   if (m < 30 && a > 70) return "😱";
+  if (d > 60) return "🥀";
   if (a > 80) return "😰";
   if (a > 60) return "😟";
   if (f >= 70 && a < 30 && m > 60) return "😁";
@@ -149,10 +224,8 @@ class Criatura {
     this.ansiedad = 0;
     this.moving = false;
     this.moveAnim = { from: { ...this.posicion }, to: { ...this.posicion }, t: 1 };
-    this.experiencia = 0;
-    this.hitos = [];
-    this.cuentaExp = {};
-    this.generation = 1;
+    this.path = [];
+    this.depresionActivo = false;
   }
   clampStats() {
     for (const stat in this.stats)
@@ -160,7 +233,6 @@ class Criatura {
     this.ansiedad = clamp(this.ansiedad, 0, 100);
   }
   actualizarEstadoProgresivo(dt) {
-    // Modificadores globales
     for (const stat in CONFIG.modificadoresGlobales) {
       if (stat === "ansiedad") this.ansiedad += CONFIG.modificadoresGlobales[stat] * dt;
       else if (this.stats[stat] !== undefined)
@@ -199,18 +271,32 @@ class Criatura {
       );
     }
     if (this.ansiedad > 0) this.ansiedad -= (CONFIG.turnoAnsiedadRebaja || 7);
-    if (this.stats.felicidad > 70) this.estadoEmocional = 'feliz';
-    else if (this.stats.felicidad < 30) this.estadoEmocional = 'triste';
-    else this.estadoEmocional = 'feliz';
-    if (this.ansiedad > 70 && this.stats.saludMental < 40) {
-      this.estadoEmocional = 'enCrisis';
-      this.tlpActivo = true;
+
+    // Depresión: si ansiedad > 70 y felicidad < 35 sube depresión
+    if (this.ansiedad > 70 && this.stats.felicidad < 35) {
+      this.stats.depresion = clamp(this.stats.depresion + 12, 0, 100);
+      this.depresionActivo = true;
+      logMsg("¡Cuidado! Estás entrando en depresión.", "warn");
+      // Efecto depresión
+      let ef = getEfectoById("depresion");
+      for (let k in ef) {
+        if (k in this.stats) this.stats[k] = clamp(this.stats[k] + ef[k], 0, 100);
+        else if (k === "ansiedad") this.ansiedad = clamp(this.ansiedad + ef[k], 0, 100);
+      }
+    } else {
+      this.depresionActivo = false;
+      if (this.stats.depresion > 0) this.stats.depresion = clamp(this.stats.depresion - 8, 0, 100);
+    }
+
+    if (this.stats.hambre > 80) {
+      this.stats.saludFisica = clamp(this.stats.saludFisica - 7, 0, 100);
     }
     for (const k in this.cooldowns) {
       if (this.cooldowns[k] > 0) this.cooldowns[k] -= CONFIG.turno;
       if (this.cooldowns[k] < 0) this.cooldowns[k] = 0;
     }
     this.clampStats();
+    checkMuerte(this);
   }
   puedeVisitarPsicologo() {
     return (turno - this.lastPsicologoTurn) >= CONFIG.psicologoMinDias;
@@ -243,17 +329,20 @@ class Criatura {
     return true;
   }
   moverSiguienteAuto() {
+    // Si tiene un path pendiente, avanza por él
+    if (this.path && this.path.length > 0) {
+      let next = this.path.shift();
+      this.moveToAnim(next);
+      return;
+    }
+    // Si no, moverse aleatorio (comportamiento original)
     let dirs = [
       { x: 1, y: 0 }, { x: -1, y: 0 }, { x: 0, y: 1 }, { x: 0, y: -1 },
       { x: 1, y: -1 }, { x: -1, y: 1 }
     ];
-    dirs = dirs.filter(d => inBounds(this.posicion.x + d.x, this.posicion.y + d.y));
-    let d = dirs[randomInt(0, dirs.length - 1)];
+    dirs = shuffle(dirs).filter(d => inBounds(this.posicion.x + d.x, this.posicion.y + d.y));
+    let d = dirs[0];
     let nx = clamp(this.posicion.x + d.x, 0, CONFIG.gridWidth - 1), ny = clamp(this.posicion.y + d.y, 0, CONFIG.gridHeight - 1);
-    let obj = CONFIG.objetos.find(o => o.pos.x === nx && o.pos.y === ny);
-    if (obj && (!this.cooldowns[obj.id] || this.cooldowns[obj.id] <= 0)) {
-      if (usarObjeto(this, obj, false)) return;
-    }
     this.moveToAnim({ x: nx, y: ny });
   }
   moveToAnim(target) {
@@ -263,10 +352,13 @@ class Criatura {
       to: { ...target },
       t: 0
     };
+    // Evento random al pisar nueva casilla
+    let zona = getZona(target.x, target.y);
+    triggerRandomEvent(zona.id, this);
   }
   updateAnim(dt) {
     if (this.moving) {
-      this.moveAnim.t += dt * 3.5;
+      this.moveAnim.t += dt * 2.5;
       if (this.moveAnim.t >= 1) {
         this.moveAnim.t = 1; this.moving = false;
         this.posicion = { ...this.moveAnim.to };
@@ -335,6 +427,7 @@ function usarObjeto(c, obj, mostrarMsg = true) {
     else if (k === "saludFisica") c.stats.saludFisica = clamp(c.stats.saludFisica + efecto[k], 0, 100);
     else if (k === "saludMental") c.stats.saludMental = clamp(c.stats.saludMental + efecto[k], 0, 100);
     else if (k === "ansiedad") c.ansiedad = clamp(c.ansiedad + efecto[k], 0, 100);
+    else if (k === "depresion") c.stats.depresion = clamp(c.stats.depresion + efecto[k], 0, 100);
   }
   if (obj.id !== "puesto-trabajo" && obj.id !== "psicologo" && CONFIG.accionRebajaAnsiedad) {
     c.ansiedad = clamp(
@@ -423,6 +516,7 @@ function renderCriaturasPanel() {
     ${renderStatBar('Salud Mental', c.stats.saludMental, '#21e27b')}
     ${renderStatBar('Salud Física', c.stats.saludFisica, '#f58f3b')}
     ${renderStatBar('Ansiedad', c.ansiedad || 0, '#e56')}
+    ${renderStatBar('Depresión', c.stats.depresion || 0, '#5a34a3')}
     <div>Turno: ${turno}</div>
   `;
   criaturasPanel.appendChild(div);
@@ -445,8 +539,6 @@ function renderStatBar(name, val, color) {
     </div>`;
   }
 }
-
-// Emoji asociados a cada stat
 function getEmojiForStat(name) {
   switch (name.toLowerCase()) {
     case "hambre": return "😋";
@@ -457,11 +549,10 @@ function getEmojiForStat(name) {
     case "salud mental": return "🧠";
     case "salud física": case "salud fisica": return "💪";
     case "ansiedad": return "😰";
+    case "depresión": case "depresion": return "🥀";
     default: return "🔹";
   }
 }
-
-// Nombre corto para móviles
 function nameShort(name) {
   switch (name.toLowerCase()) {
     case "hambre": return "Ham";
@@ -472,10 +563,10 @@ function nameShort(name) {
     case "salud mental": return "Ment";
     case "salud física": case "salud fisica": return "Fís";
     case "ansiedad": return "Ans";
+    case "depresión": case "depresion": return "Dep";
     default: return name.slice(0,3);
   }
 }
-
 function renderStatOverlay() {
   let overlay = document.getElementById('stat-overlay');
   if (!overlay) {
@@ -491,8 +582,6 @@ function renderStatOverlay() {
   }
   let c = criaturas[0];
   let fecha = getGameDateTime();
-
-  // Días para móvil: 📅 L M X J V S D
   const diasLetras = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
   const isMobile = window.matchMedia("(max-width: 900px)").matches;
   if (!isMobile) {
@@ -506,6 +595,7 @@ function renderStatOverlay() {
         <span>🧠${Math.round(c.stats.saludMental)}</span>
         <span>💪${Math.round(c.stats.saludFisica)}</span>
         <span>😰${Math.round(c.ansiedad)}</span>
+        <span>🥀${Math.round(c.stats.depresion)}</span>
         <span style="margin-left:24px;">${fecha.str}</span>
       </div>
     `;
@@ -520,6 +610,7 @@ function renderStatOverlay() {
         <span>🧠${Math.round(c.stats.saludMental)}</span>
         <span>💪${Math.round(c.stats.saludFisica)}</span>
         <span>😰${Math.round(c.ansiedad)}</span>
+        <span>🥀${Math.round(c.stats.depresion)}</span>
       </div>
       <div style="margin-top:6px;font-size:1.2em;text-align:center;">
         📅 <span style="font-size:1.13em;letter-spacing:.23em;">${diasLetras[fecha.jsDay]}</span>
@@ -531,9 +622,12 @@ function renderStatOverlay() {
 // === ENTORNO Y ANIMACIÓN ===
 function renderEntorno() {
   if (!canvas) return;
+  // Soporte HD: usa devicePixelRatio
+  const dpr = window.devicePixelRatio || 1;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.save();
-  ctx.setTransform(zoom, 0, 0, zoom, 0, 0);
-  ctx.clearRect(0, 0, canvas.width / zoom, canvas.height / zoom);
+  ctx.scale(dpr, dpr);
 
   for (const z of CONFIG.zonas.concat([{ nombre: "Calle", emoji: "🚶", id: "calle", fromX: 0, fromY: 0, toX: CONFIG.gridWidth - 1, toY: CONFIG.gridHeight - 1, color: "#555" }])) {
     ctx.save();
@@ -627,19 +721,19 @@ function renderEntorno() {
   ctx.restore();
   ctx.restore();
 }
-// === VARIABLES DE DESPLAZAMIENTO (PANEO) ===
+
+// === PANEADO Y ZOOM ===
 let panX = 0, panY = 0;
 let isPanning = false;
 let lastPanX = 0, lastPanY = 0;
 let panStartX = 0, panStartY = 0;
 
-// === isoToScreen centrado dinámico y con pan ===
 function isoToScreen(x, y) {
-  // Centra el mapa en el canvas y aplica pan
-  const centerX = canvas.width / 2;
-  const centerY = canvas.height / 2;
-  const mapPixelWidth = CONFIG.gridWidth * tileWidth / 2 + CONFIG.gridHeight * tileWidth / 2;
-  const mapPixelHeight = CONFIG.gridWidth * tileHeight / 2 + CONFIG.gridHeight * tileHeight / 2;
+  // Para soporte HD, los tamaños de tiles no cambian por DPR, solo el canvas
+  const centerX = (canvas.width / (window.devicePixelRatio || 1)) / 2;
+  const centerY = (canvas.height / (window.devicePixelRatio || 1)) / 2;
+  const mapPixelWidth = (CONFIG.gridWidth + CONFIG.gridHeight) * tileWidth / 2;
+  const mapPixelHeight = (CONFIG.gridWidth + CONFIG.gridHeight) * tileHeight / 2;
   const offsetX = centerX - mapPixelWidth / 2 + panX;
   const offsetY = centerY - mapPixelHeight / 2 + panY;
   return {
@@ -648,7 +742,6 @@ function isoToScreen(x, y) {
   };
 }
 
-// === PANEADO: eventos de drag para mover el mapa ===
 function setupPanning() {
   // Mouse
   canvas.addEventListener('mousedown', e => {
@@ -692,13 +785,11 @@ function setupPanning() {
   });
 }
 
-// === RECALCULA PANEADO AL REDIMENSIONAR ===
 function resetPan() {
   panX = 0;
   panY = 0;
 }
 
-// === REEMPLAZA resizeCanvas PARA RESETEAR PANEADO ===
 window.addEventListener('resize', () => {
   resizeCanvas();
   resetPan();
@@ -774,7 +865,7 @@ function setZoom(z) {
 }
 function crearZoomUI() {
   let zoomUI = document.createElement('div');
-  zoomUI.style = "position:fixed;top:60px;right:16px;z-index:99;background:#2333;backdrop-filter:blur(2px);border-radius:9px;padding:7px 11px;";
+  zoomUI.className = "zoom-ui";
   let menos = document.createElement('button');
   menos.textContent = "➖";
   menos.onclick = () => { setZoom(zoom - CONFIG.zoomStep); };
@@ -787,9 +878,11 @@ function crearZoomUI() {
 }
 document.addEventListener("DOMContentLoaded", crearZoomUI);
 
-// === ACCIONES MANUALES ===
+// === ACCIONES MANUALES CON PATHFINDING ===
 function handlePointerEvent(e) {
+  if (isPanning) return; // No mover criatura si estamos arrastrando el mapa
   e.preventDefault();
+  const dpr = window.devicePixelRatio || 1;
   const rect = canvas.getBoundingClientRect();
   let mx, my;
   if (e.touches && e.touches.length) {
@@ -799,6 +892,9 @@ function handlePointerEvent(e) {
     mx = e.clientX - rect.left;
     my = e.clientY - rect.top;
   }
+  mx = mx / dpr;
+  my = my / dpr;
+
   let clickTile = null, minDist = 999;
   for (let x = 0; x < CONFIG.gridWidth; x++) for (let y = 0; y < CONFIG.gridHeight; y++) {
     let { x: sx, y: sy } = isoToScreen(x, y);
@@ -810,43 +906,26 @@ function handlePointerEvent(e) {
   let sel = criaturas[0];
   if (sel.posicion.x === clickTile.x && sel.posicion.y === clickTile.y) return;
   if (!inBounds(clickTile.x, clickTile.y)) return;
-  let obj = CONFIG.objetos.find(o => o.pos.x === clickTile.x && o.pos.y === clickTile.y);
-  if (obj && sel.cooldowns[obj.id] > 0) {
-    logMsg("¡Debes esperar para volver a usar " + obj.name + "!", "warn");
-    sel.moveToAnim(clickTile);
-    return;
-  }
-  if (obj && typeof getEfectoById === "function") {
-    if (usarObjeto(sel, obj, true)) { sel.moveToAnim(clickTile); return; }
-  }
-  sel.moveToAnim(clickTile);
+  // Pathfinding hacia clickTile
+  sel.path = findPath(sel.posicion, clickTile);
+  // Al llegar a la meta, si hay objeto, usarlo
+  sel.pathObjTarget = CONFIG.objetos.find(o => o.pos.x === clickTile.x && o.pos.y === clickTile.y);
 }
 
 // === BOTÓN LLAMAR A CRIS Y ESCUCHAR MÚSICA ===
 function crearBotonesExtra() {
   let btnCris = document.createElement('button');
   btnCris.id = "btn-cris";
+  btnCris.className = "floating-btn";
   btnCris.textContent = "📞 Llamar a Cris";
-  btnCris.style = `
-    position:fixed; bottom:24px; right:24px;
-    background:#3f3c6b; color:#fff; border:none; border-radius:12px;
-    font-size:1.23em; padding:16px 22px; z-index:99;
-    box-shadow: 0 3px 14px #0006;
-    cursor:pointer;
-  `;
   btnCris.onclick = llamarACris;
   document.body.appendChild(btnCris);
 
   let btnMusica = document.createElement('button');
   btnMusica.id = "btn-musica";
+  btnMusica.className = "floating-btn";
   btnMusica.textContent = "🎵 Escuchar Música";
-  btnMusica.style = `
-    position:fixed; bottom:90px; right:24px;
-    background:#2196f3; color:#fff; border:none; border-radius:12px;
-    font-size:1.14em; padding:14px 17px; z-index:99;
-    box-shadow: 0 3px 14px #0006;
-    cursor:pointer;
-  `;
+  btnMusica.style.bottom = "90px";
   btnMusica.onclick = escucharMusica;
   document.body.appendChild(btnMusica);
 }
@@ -864,10 +943,15 @@ async function main() {
     canvas.addEventListener('click', handlePointerEvent);
     canvas.addEventListener('touchstart', handlePointerEvent, { passive: false });
     canvas.focus();
-    setupPanning(); // <= Nuevo
+    setupPanning();
   }
   requestAnimationFrame(gameLoop);
   tickJuego();
   chequearInactividad();
 }
 main();
+
+function actualizarUI() {
+  renderCriaturasPanel();
+  renderStatOverlay();
+}
