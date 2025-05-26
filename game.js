@@ -562,22 +562,86 @@ function renderEntorno() {
   ctx.restore();
   ctx.restore();
 }
+// === VARIABLES DE DESPLAZAMIENTO (PANEO) ===
+let panX = 0, panY = 0;
+let isPanning = false;
+let lastPanX = 0, lastPanY = 0;
+let panStartX = 0, panStartY = 0;
+
+// === isoToScreen centrado dinámico y con pan ===
 function isoToScreen(x, y) {
-  // Centra el mapa en el canvas
-  const centerX = (canvas.width) / 2;
-  const centerY = (canvas.height) / 2;
-  // Calcula el tamaño del mapa en píxeles
+  // Centra el mapa en el canvas y aplica pan
+  const centerX = canvas.width / 2;
+  const centerY = canvas.height / 2;
   const mapPixelWidth = CONFIG.gridWidth * tileWidth / 2 + CONFIG.gridHeight * tileWidth / 2;
   const mapPixelHeight = CONFIG.gridWidth * tileHeight / 2 + CONFIG.gridHeight * tileHeight / 2;
-  // Offset para centrar el mapa
-  const offsetX = centerX - mapPixelWidth / 2;
-  const offsetY = centerY - mapPixelHeight / 2;
-
+  const offsetX = centerX - mapPixelWidth / 2 + panX;
+  const offsetY = centerY - mapPixelHeight / 2 + panY;
   return {
     x: (x - y) * tileWidth / 2 + offsetX,
     y: (x + y) * tileHeight / 2 + offsetY
   };
 }
+
+// === PANEADO: eventos de drag para mover el mapa ===
+function setupPanning() {
+  // Mouse
+  canvas.addEventListener('mousedown', e => {
+    isPanning = true;
+    panStartX = e.clientX;
+    panStartY = e.clientY;
+    lastPanX = panX;
+    lastPanY = panY;
+    document.body.style.cursor = "grabbing";
+  });
+  window.addEventListener('mousemove', e => {
+    if (isPanning) {
+      panX = lastPanX + (e.clientX - panStartX);
+      panY = lastPanY + (e.clientY - panStartY);
+    }
+  });
+  window.addEventListener('mouseup', e => {
+    if (isPanning) {
+      isPanning = false;
+      document.body.style.cursor = "";
+    }
+  });
+  // Touch
+  canvas.addEventListener('touchstart', e => {
+    if (e.touches.length === 1) {
+      isPanning = true;
+      panStartX = e.touches[0].clientX;
+      panStartY = e.touches[0].clientY;
+      lastPanX = panX;
+      lastPanY = panY;
+    }
+  }, { passive: false });
+  window.addEventListener('touchmove', e => {
+    if (isPanning && e.touches.length === 1) {
+      panX = lastPanX + (e.touches[0].clientX - panStartX);
+      panY = lastPanY + (e.touches[0].clientY - panStartY);
+    }
+  }, { passive: false });
+  window.addEventListener('touchend', e => {
+    if (isPanning) isPanning = false;
+  });
+}
+
+// === RECALCULA PANEADO AL REDIMENSIONAR ===
+function resetPan() {
+  panX = 0;
+  panY = 0;
+}
+
+// === REEMPLAZA resizeCanvas PARA RESETEAR PANEADO ===
+window.addEventListener('resize', () => {
+  resizeCanvas();
+  resetPan();
+});
+window.addEventListener('DOMContentLoaded', () => {
+  resizeCanvas();
+  resetPan();
+});
 
 // === LOOP Y TICK ===
 let lastTime = performance.now();
@@ -735,6 +799,7 @@ async function main() {
     canvas.addEventListener('click', handlePointerEvent);
     canvas.addEventListener('touchstart', handlePointerEvent, { passive: false });
     canvas.focus();
+    setupPanning(); // <= Nuevo
   }
   requestAnimationFrame(gameLoop);
   tickJuego();
