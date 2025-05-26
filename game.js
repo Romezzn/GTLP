@@ -1,6 +1,5 @@
-// version revisada: eventos aleatorios, pathfinding, depresión, TLP activo, muerte y render HD
+// version robusta: objetos clicables, path prioritario, acción segura y estados visuales
 
-// === SISTEMA DE CONFIGURACIÓN Y UTILIDAD ===
 let CONFIG = {};
 async function loadConfig() {
   const resp = await fetch('config.json');
@@ -25,20 +24,18 @@ function randomInt(a, b) { return Math.floor(Math.random() * (b - a + 1)) + a; }
 function inBounds(x, y) { return x >= 0 && y >= 0 && x < CONFIG.gridWidth && y < CONFIG.gridHeight; }
 function shuffle(arr) { for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; }
 
-// === ESTADO GLOBAL ===
 let criaturas = [], turno = 0, currentTick = 0, eventLog = [];
 let ultimaAccion = Date.now(), zoom = 1.0, tileWidth, tileHeight;
 let canvas, ctx;
 let eventLogScroll = 0;
 
-// === ESTADO DE CRIS ===
 let crisVisitDays = [];
 let crisOnMap = false;
 let crisTurnoFinaliza = -1;
 let crisPos = null;
 let crisLlamadaUltima = -1000;
 
-// === PATHFINDING: BFS simple para moverse por el mapa ===
+// --- Pathfinding ---
 function findPath(from, to) {
   if (from.x === to.x && from.y === to.y) return [];
   let queue = [{ x: from.x, y: from.y, path: [] }];
@@ -62,7 +59,7 @@ function findPath(from, to) {
   return [];
 }
 
-// === FECHA Y TIEMPO DE JUEGO ===
+// --- FECHA Y TIEMPO ---
 const WEEK_DAYS = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 function getGameDateTime() {
   let start = new Date(2025, 0, 6, 8, 0, 0, 0);
@@ -81,9 +78,8 @@ function getGameDateTime() {
   };
 }
 
-// === EVENTOS ALEATORIOS ===
+// --- EVENTOS ALEATORIOS ---
 function triggerRandomEvent(zonaId, c) {
-  // Solo activar si está permitido en config
   if (!CONFIG.enableRandomEvents) return false;
   let triggered = false;
   for (let k in CONFIG.eventos) {
@@ -101,31 +97,14 @@ function triggerRandomEvent(zonaId, c) {
   return triggered;
 }
 
-// === MUERTE / GAME OVER ===
+// --- MUERTE / GAME OVER ---
 function checkMuerte(c) {
-  // Solo verificar muerte si eventos normales están permitidos
   if (!CONFIG.enableNormalEvents) return false;
-
-  if (c.stats.hambre >= 100) {
-    logMsg("¡Has muerto de hambre! 💀", "warn");
-    endGame("hambre");
-    return true;
-  }
-  if (c.stats.depresion >= 100) {
-    logMsg("¡Has muerto por suicidio (depresión)! 💀", "warn");
-    endGame("suicidio");
-    return true;
-  }
-  if (c.stats.saludFisica <= 0) {
-    logMsg("¡Has muerto por salud física muy baja! 💀", "warn");
-    endGame("saludFisica");
-    return true;
-  }
-  // Atropello: probabilidad si está en la calle y ansiedad muy alta
+  if (c.stats.hambre >= 100) { logMsg("¡Has muerto de hambre! 💀", "warn"); endGame("hambre"); return true; }
+  if (c.stats.depresion >= 100) { logMsg("¡Has muerto por suicidio (depresión)! 💀", "warn"); endGame("suicidio"); return true; }
+  if (c.stats.saludFisica <= 0) { logMsg("¡Has muerto por salud física muy baja! 💀", "warn"); endGame("saludFisica"); return true; }
   if (getZona(c.posicion.x, c.posicion.y).id === "calle" && c.ansiedad > 90 && Math.random() < 0.06) {
-    logMsg("¡Has muerto atropellado! 💀", "warn");
-    endGame("atropello");
-    return true;
+    logMsg("¡Has muerto atropellado! 💀", "warn"); endGame("atropello"); return true;
   }
   return false;
 }
@@ -136,7 +115,7 @@ function endGame(tipo) {
   }, 900);
 }
 
-// === CRIS: GESTIÓN DE VISITAS ALEATORIAS ===
+// --- CRIS ---
 function planificarVisitasCris() {
   let daysInMonth = 30;
   let days = [];
@@ -168,10 +147,7 @@ function finalizarVisitaCris() {
   crisPos = null;
 }
 function llamarACris() {
-  if (turno === crisLlamadaUltima) {
-    logMsg("¡Ya has llamado a Cris hoy!", "warn");
-    return;
-  }
+  if (turno === crisLlamadaUltima) { logMsg("¡Ya has llamado a Cris hoy!", "warn"); return; }
   crisLlamadaUltima = turno;
   let c = criaturas[0];
   let efecto = getEfectoById("cris-llamada");
@@ -182,13 +158,10 @@ function llamarACris() {
   actualizarUI();
 }
 
-// === ESCUCHAR MÚSICA ===
+// --- ESCUCHAR MÚSICA ---
 let musicaCooldown = -1000;
 function escucharMusica() {
-  if (musicaCooldown === turno) {
-    logMsg("Solo puedes escuchar música una vez por día.", "warn");
-    return;
-  }
+  if (musicaCooldown === turno) { logMsg("Solo puedes escuchar música una vez por día.", "warn"); return; }
   musicaCooldown = turno;
   let c = criaturas[0];
   let efecto = getEfectoById("musica");
@@ -199,12 +172,9 @@ function escucharMusica() {
   actualizarUI();
 }
 
-// === EMOJI SEGÚN ESTADO DE ÁNIMO ===
+// --- EMOJI SEGÚN ESTADO DE ÁNIMO ---
 function getEstadoEmoji(c) {
-  const f = c.stats.felicidad;
-  const a = c.ansiedad;
-  const m = c.stats.saludMental;
-  const d = c.stats.depresion;
+  const f = c.stats.felicidad, a = c.ansiedad, m = c.stats.saludMental, d = c.stats.depresion;
   if (c.estadoEmocional === 'enCrisis' || (a > 85 && m < 40)) return "🥵";
   if (m < 30 && a > 70) return "😱";
   if (d > 60) return "🥀";
@@ -219,7 +189,7 @@ function getEstadoEmoji(c) {
   return "🙂";
 }
 
-// === CLASE CRIATURA ===
+// --- CLASE CRIATURA ---
 class Criatura {
   constructor(data) {
     Object.assign(this, data);
@@ -230,6 +200,7 @@ class Criatura {
     this.moving = false;
     this.moveAnim = { from: { ...this.posicion }, to: { ...this.posicion }, t: 1 };
     this.path = [];
+    this.pathObjTarget = undefined;
     this.depresionActivo = false;
   }
   clampStats() {
@@ -252,39 +223,31 @@ class Criatura {
     this.clampStats();
   }
   actualizarEstadoTurno() {
-    if (!CONFIG.enableNormalEvents) return; // Solo aplicar lógica si eventos normales están permitidos
-
+    if (!CONFIG.enableNormalEvents) return;
     this.stats.confianza = clamp(this.stats.confianza + (CONFIG.turnoConfianza || 10), 0, 100);
     this.vinculo = clamp((this.vinculo || 0) + (CONFIG.turnoVinculo || 10), 0, 100);
     let mejora = Math.floor((this.stats.confianza + (this.vinculo || 0)) / 20);
     this.stats.saludMental = clamp(this.stats.saludMental + mejora, 0, 100);
 
     let fecha = getGameDateTime();
-    if (
-      fecha.weekDay >= 1 && fecha.weekDay <= 5 &&
-      (!this.lastTrabajoTurn || this.lastTrabajoTurn !== turno - 1)
-    ) {
-      this.ansiedad = clamp((this.ansiedad || 0) + (CONFIG.trabajoNoHechoAnsiedad || 18), 0, 100);
+    if (fecha.weekDay >= 1 && fecha.weekDay <= 5 && (!this.lastTrabajoTurn || this.lastTrabajoTurn !== turno - 1)) {
+      this.ansiedad = clamp((this.ansiedad || 0) + (CONFIG.trabajoNoHechoAnsiedad || 8), 0, 100);
       logMsg("¡Uy! Se te olvidó trabajar. ¡La ansiedad sube!", "warn");
     }
     if (this.ansiedad > 0) {
       let mentalPenalty = Math.floor(this.ansiedad / 10);
       this.stats.saludMental = clamp(this.stats.saludMental - mentalPenalty, 0, 100);
     }
-    if (this.ansiedad > (CONFIG.felicidadAnsiedadUmbral ?? 50)) {
-      this.stats.felicidad = clamp(
-        this.stats.felicidad - (CONFIG.felicidadAnsiedadDecaimiento ?? 12),
-        0, 100
-      );
+    if (this.ansiedad > (CONFIG.felicidadAnsiedadUmbral ?? 60)) {
+      this.stats.felicidad = clamp(this.stats.felicidad - (CONFIG.felicidadAnsiedadDecaimiento ?? 8), 0, 100);
     }
-    if (this.ansiedad > 0) this.ansiedad -= (CONFIG.turnoAnsiedadRebaja || 7);
+    if (this.ansiedad > 0) this.ansiedad -= (CONFIG.turnoAnsiedadRebaja || 5);
 
-    // Depresión: si ansiedad > 70 y felicidad < 35 sube depresión
+    // Depresión
     if (this.ansiedad > 70 && this.stats.felicidad < 35) {
       this.stats.depresion = clamp(this.stats.depresion + 12, 0, 100);
       this.depresionActivo = true;
       logMsg("¡Cuidado! Estás entrando en depresión.", "warn");
-      // Efecto depresión
       let ef = getEfectoById("depresion");
       for (let k in ef) {
         if (k in this.stats) this.stats[k] = clamp(this.stats[k] + ef[k], 0, 100);
@@ -309,7 +272,7 @@ class Criatura {
     return (turno - this.lastPsicologoTurn) >= CONFIG.psicologoMinDias;
   }
   visitarPsicologo() {
-    if (!this.puedeVisitarPsicologo()) { logMsg("¡Debes esperar 20 días entre visitas al psicólogo!", "warn"); return false; }
+    if (!this.puedeVisitarPsicologo()) { logMsg("¡Debes esperar para volver al psicólogo!", "warn"); return false; }
     if (this.stats.saludMental >= 100 && this.stats.confianza >= 100) { logMsg("¡No necesitas al psicólogo ahora!", "warn"); return false; }
     let efecto = getEfectoById("psicologo");
     this.stats.saludMental = clamp(this.stats.saludMental + (efecto.saludMental || 0), 0, 100);
@@ -328,21 +291,23 @@ class Criatura {
     if (!this.puedeVisitarTrabajo()) return false;
     let efecto = getEfectoById("puesto-trabajo");
     this.ansiedad = clamp(this.ansiedad + (efecto.ansiedad || 0), 0, 100);
-    this.stats.energia = clamp(this.stats.energia + (efecto.energia || -8), 0, 100);
-    this.stats.saludMental = clamp(this.stats.saludMental + (efecto.saludMental || -6), 0, 100);
-    this.stats.felicidad = clamp(this.stats.felicidad + (efecto.felicidad || 7), 0, 100);
+    this.stats.energia = clamp(this.stats.energia + (efecto.energia || -5), 0, 100);
+    this.stats.saludMental = clamp(this.stats.saludMental + (efecto.saludMental || -4), 0, 100);
+    this.stats.felicidad = clamp(this.stats.felicidad + (efecto.felicidad || 4), 0, 100);
     this.lastTrabajoTurn = turno;
     logMsg("¡Has ido a trabajar! ☕", "good");
     return true;
   }
+  // --- Movimiento prioritario hacia objetos ---
   moverSiguienteAuto() {
-    // Si tiene un path pendiente, avanza por él
     if (this.path && this.path.length > 0) {
       let next = this.path.shift();
       this.moveToAnim(next);
       return;
     }
-    // Si no, moverse aleatorio (comportamiento original)
+    // Si hay un objetivo de objeto y NO hay path, permanece quieto para ejecutar acción en tickJuego
+    if (this.pathObjTarget) return;
+    // Si no, moverse aleatorio
     let dirs = [
       { x: 1, y: 0 }, { x: -1, y: 0 }, { x: 0, y: 1 }, { x: 0, y: -1 },
       { x: 1, y: -1 }, { x: -1, y: 1 }
@@ -354,12 +319,7 @@ class Criatura {
   }
   moveToAnim(target) {
     this.moving = true;
-    this.moveAnim = {
-      from: { ...this.posicion },
-      to: { ...target },
-      t: 0
-    };
-    // Evento random al pisar nueva casilla
+    this.moveAnim = { from: { ...this.posicion }, to: { ...target }, t: 0 };
     let zona = getZona(target.x, target.y);
     triggerRandomEvent(zona.id, this);
   }
@@ -382,7 +342,7 @@ class Criatura {
   }
 }
 
-// === USO DE OBJETOS ===
+// --- USO DE OBJETOS ---
 function usarObjeto(c, obj, mostrarMsg = true) {
   let efecto = getEfectoById(obj.id);
   if (c.cooldowns[obj.id] > 0) { if (mostrarMsg) logMsg("¡Debes esperar para volver a usar " + obj.name + "!", "warn"); return false; }
@@ -447,7 +407,7 @@ function usarObjeto(c, obj, mostrarMsg = true) {
   return true;
 }
 
-// === LOGS Y PANEL VISUAL ===
+// --- LOGS Y PANEL VISUAL ---
 function logMsg(msg, type = "") {
   eventLog.push({ msg, type, t: Date.now() });
   if (eventLog.length > 100) eventLog.shift();
@@ -502,7 +462,7 @@ function renderLog() {
   }).join('');
 }
 
-// === PANEL DE CRIATURA CON BARRAS Y OBJETOS INTERACTIVOS ===
+// --- PANEL DE CRIATURA CON BARRAS Y OBJETOS INTERACTIVOS ---
 function renderCriaturasPanel() {
   const criaturasPanel = document.getElementById('criaturasPanel');
   if (!criaturasPanel) return;
@@ -530,7 +490,6 @@ function renderCriaturasPanel() {
   renderObjetosInteractivos();
 }
 
-// === OBJETOS INTERACTIVOS PANEL ===
 let objetoEstado = {}; // { id: "idle"/"inprogress"/"done"/"cooldown"/"blocked" }
 
 function renderObjetosInteractivos() {
@@ -545,7 +504,6 @@ function renderObjetosInteractivos() {
   panel.innerHTML = "<b>Objetos:</b><br>";
 
   CONFIG.objetos.forEach(obj => {
-    // Estado del objeto para el color:
     let c = criaturas[0];
     let estado = "idle";
     let cooldown = c.cooldowns[obj.id] || 0;
@@ -561,7 +519,6 @@ function renderObjetosInteractivos() {
         estado = "blocked";
       }
     }
-    // Crea el botón/visual:
     let button = document.createElement('button');
     button.className = "objeto-boton";
     button.innerHTML = `<span style="font-size:1.4em;">${obj.icon}</span> ${obj.name}`;
@@ -578,7 +535,6 @@ function renderObjetosInteractivos() {
     button.style.cursor = "pointer";
     button.disabled = false;
 
-    // Estilo según estado
     if (estado === "idle") {
       button.style.background = "#222";
       button.style.color = "#fff";
@@ -607,11 +563,9 @@ function renderObjetosInteractivos() {
       button.title = "No se puede usar ahora";
     }
 
-    // Acción de click
     button.onclick = () => {
       if (estado !== "idle") return;
       let c = criaturas[0];
-      // Si ya está en la casilla del objeto, ejecutar al momento
       if (c.posicion.x === obj.pos.x && c.posicion.y === obj.pos.y) {
         objetoEstado[obj.id] = "inprogress";
         renderObjetosInteractivos();
@@ -644,21 +598,17 @@ function renderObjetosInteractivos() {
         }, 350);
         return;
       }
-  // Si no, programar el movimiento normal
-  objetoEstado[obj.id] = "inprogress";
-  renderObjetosInteractivos();
-  c.path = findPath(c.posicion, obj.pos);
-  c.pathObjTarget = obj;
-};
+      objetoEstado[obj.id] = "inprogress";
+      renderObjetosInteractivos();
+      c.path = findPath(c.posicion, obj.pos);
+      c.pathObjTarget = obj;
+    };
 
-    // Adjuntar al panel
     panel.appendChild(button);
   });
 }
 
-// Determina si el objeto está disponible para usarse (sin cooldown, stats no saturados, etc.)
 function puedeUsarObjeto(c, obj) {
-  // Chequeo similar al de usarObjeto pero sin modificar nada
   let efecto = getEfectoById(obj.id);
   if ((c.cooldowns[obj.id] || 0) > 0) return false;
   let saturado = false;
@@ -669,15 +619,14 @@ function puedeUsarObjeto(c, obj) {
     else if (k !== "hambre" && (c.stats[k] !== undefined) && efecto[k] < 0 && c.stats[k] <= 0) saturado = true;
   }
   if (saturado) return false;
-  // Otros requisitos especiales:
   if (obj.id === "puesto-trabajo" && !c.puedeVisitarTrabajo()) return false;
   if (obj.id === "psicologo" && !c.puedeVisitarPsicologo()) return false;
   return true;
 }
 
-// === ACCIONES MANUALES CON PATHFINDING (mejorado para objetos) ===
+// --- ACCIONES MANUALES CON PATHFINDING (mejorado para objetos) ---
 function handlePointerEvent(e) {
-  if (isPanning) return; // No mover criatura si estamos arrastrando el mapa
+  if (isPanning) return;
   e.preventDefault();
   const dpr = window.devicePixelRatio || 1;
   const rect = canvas.getBoundingClientRect();
@@ -704,32 +653,35 @@ function handlePointerEvent(e) {
   if (sel.posicion.x === clickTile.x && sel.posicion.y === clickTile.y) return;
   if (!inBounds(clickTile.x, clickTile.y)) return;
 
-  // ¿Hay un objeto en esa casilla?
   let obj = CONFIG.objetos.find(o => o.pos.x === clickTile.x && o.pos.y === clickTile.y);
   if (obj && puedeUsarObjeto(sel, obj)) {
-    // Simula click en panel de objeto
     objetoEstado[obj.id] = "inprogress";
     renderObjetosInteractivos();
     sel.path = findPath(sel.posicion, obj.pos);
     sel.pathObjTarget = obj;
     return;
   }
-  // Pathfinding hacia clickTile normal
   sel.path = findPath(sel.posicion, clickTile);
   sel.pathObjTarget = undefined;
 }
 
-// === Mejorar lógica de ejecución de objetos al llegar ===
+// --- LOGICA DE EJECUCIÓN DE OBJETOS AL LLEGAR ---
 function tickJuego() {
   currentTick++;
   let c = criaturas[0];
-  if (!c.moving && c.moverSiguienteAuto) c.moverSiguienteAuto();
+
+  // Prioridad: si hay path o pathObjTarget, NO moverse aleatorio.
+  if (!c.moving && (c.path && c.path.length > 0 || c.pathObjTarget)) {
+    c.moverSiguienteAuto();
+  } else if (!c.moving && !c.pathObjTarget) {
+    // Solo moverse aleatorio si no hay ninguna acción pendiente
+    c.moverSiguienteAuto();
+  }
 
   // Si el personaje llegó a un objeto marcado como destino
   if (!c.moving && c.pathObjTarget) {
     let obj = c.pathObjTarget;
     if (c.posicion.x === obj.pos.x && c.posicion.y === obj.pos.y) {
-      // Ejecuta el objeto solo si es usable
       if (puedeUsarObjeto(c, obj)) {
         let ok = usarObjeto(c, obj, true);
         if (ok) {
@@ -779,17 +731,17 @@ function tickJuego() {
   actualizarUI();
   setTimeout(tickJuego, CONFIG.gameTick);
 }
+
+// --- ESTILO Y UI ---
 function renderStatBar(name, val, color) {
   const isMobile = window.matchMedia("(max-width: 900px)").matches;
   if (!isMobile) {
-    // Horizontal para escritorio
     return `<div class="stat-bar" title="${name}" style="position:relative; height:18px; background:#3335; border-radius:7px; margin:4px 0 3px 0;">
       <span class="stat-fill" style="position:absolute; left:0; top:0; height:18px; border-radius:7px; background:${color}; width:${clamp(val,0,100)}%;"></span>
       <span class="stat-text" style="position:absolute; left:10px; top:0; font-size:13px; color:#fff;">${name}: ${Math.round(val)}</span>
     </div>`;
   } else {
-    // Vertical para móvil
-    return `<div class="stat-bar-vert" title="${name}" style="position:relative; width:28px; height:90px; background:#3335; border-radius:9px; margin:5px 5px 5px 5px; display:flex; flex-direction:column; align-items:center; justify-content:flex-end;">
+    return `<div class="stat-bar-vert" title="${name}" style="position:relative; width:28px; height:90px; background:#3335; border-radius:9px; margin:5px 5px 5px 5px; display:flex; flex-direction:colu[...]
       <span class="stat-fill-vert" style="position:absolute; left:0; bottom:0; width:100%; border-radius:9px; background:${color}; height:${clamp(val,0,100)}%; transition:height 0.3s;"></span>
       <span class="stat-icon" style="position:relative; z-index:2; margin-top:4px; font-size:1.1em;">${getEmojiForStat(name)}</span>
       <span class="stat-value" style="position:relative; z-index:2; margin-bottom:4px; font-size:0.93em; color:#fff; font-weight:bold;">${Math.round(val)}</span>
@@ -877,10 +829,9 @@ function renderStatOverlay() {
   }
 }
 
-// === ENTORNO Y ANIMACIÓN ===
+// --- ENTORNO Y ANIMACIÓN ---
 function renderEntorno() {
   if (!canvas) return;
-  // Soporte HD: usa devicePixelRatio
   const dpr = window.devicePixelRatio || 1;
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -980,14 +931,13 @@ function renderEntorno() {
   ctx.restore();
 }
 
-// === PANEADO Y ZOOM ===
+// --- PANEADO Y ZOOM ---
 let panX = 0, panY = 0;
 let isPanning = false;
 let lastPanX = 0, lastPanY = 0;
 let panStartX = 0, panStartY = 0;
 
 function isoToScreen(x, y) {
-  // Para soporte HD, los tamaños de tiles no cambian por DPR, solo el canvas
   const centerX = (canvas.width / (window.devicePixelRatio || 1)) / 2;
   const centerY = (canvas.height / (window.devicePixelRatio || 1)) / 2;
   const mapPixelWidth = (CONFIG.gridWidth + CONFIG.gridHeight) * tileWidth / 2;
@@ -1001,7 +951,6 @@ function isoToScreen(x, y) {
 }
 
 function setupPanning() {
-  // Mouse
   canvas.addEventListener('mousedown', e => {
     isPanning = true;
     panStartX = e.clientX;
@@ -1022,7 +971,6 @@ function setupPanning() {
       document.body.style.cursor = "";
     }
   });
-  // Touch
   canvas.addEventListener('touchstart', e => {
     if (e.touches.length === 1) {
       isPanning = true;
@@ -1043,21 +991,11 @@ function setupPanning() {
   });
 }
 
-function resetPan() {
-  panX = 0;
-  panY = 0;
-}
+function resetPan() { panX = 0; panY = 0; }
+window.addEventListener('resize', () => { resizeCanvas(); resetPan(); });
+window.addEventListener('DOMContentLoaded', () => { resizeCanvas(); resetPan(); });
 
-window.addEventListener('resize', () => {
-  resizeCanvas();
-  resetPan();
-});
-window.addEventListener('DOMContentLoaded', () => {
-  resizeCanvas();
-  resetPan();
-});
-
-// === LOOP Y TICK ===
+// --- LOOP Y TICK ---
 let lastTime = performance.now();
 function gameLoop(ts) {
   let dt = ((ts - lastTime) / CONFIG.gameTick);
@@ -1069,33 +1007,12 @@ function gameLoop(ts) {
   renderStatOverlay();
   requestAnimationFrame(gameLoop);
 }
-function tickJuego() {
-  currentTick++;
-  let c = criaturas[0];
-  if (!c.moving && c.moverSiguienteAuto) c.moverSiguienteAuto();
-
-  let fecha = getGameDateTime();
-  if (turno === 0 || fecha.date === 1) planificarVisitasCris();
-  if (crisVisitDays.includes(fecha.date) && !crisOnMap) iniciarVisitaCris();
-  if (crisOnMap && turno >= crisTurnoFinaliza) finalizarVisitaCris();
-
-  if (currentTick >= CONFIG.ticksPerTurn) {
-    turno++; currentTick = 0;
-    if (c.actualizarEstadoTurno) c.actualizarEstadoTurno();
-    let puestoTrabajoObj = getObjById("puesto-trabajo");
-    if (c.puedeVisitarTrabajo && c.puedeVisitarTrabajo() && c.posicion.x === puestoTrabajoObj.pos.x && c.posicion.y === puestoTrabajoObj.pos.y) {
-      usarObjeto(c, puestoTrabajoObj, true);
-    }
-    if (c.puedeVisitarPsicologo && c.puedeVisitarPsicologo() && c.posicion.x === getObjById('psicologo').pos.x && c.posicion.y === getObjById('psicologo').pos.y) {
-      c.visitarPsicologo();
-    }
-    renderLog();
-  }
-  actualizarUI();
-  setTimeout(tickJuego, CONFIG.gameTick);
+function actualizarUI() {
+  renderCriaturasPanel();
+  renderStatOverlay();
 }
 
-// === INACTIVIDAD ===
+// --- INACTIVIDAD ---
 function chequearInactividad() {
   let ahora = Date.now();
   if (ahora - ultimaAccion > CONFIG.inactividadMs) {
@@ -1114,7 +1031,7 @@ function chequearInactividad() {
   window.addEventListener(evt, () => { ultimaAccion = Date.now(); }, true)
 );
 
-// === ZOOM ===
+// --- ZOOM ---
 function setZoom(z) {
   zoom = clamp(z, CONFIG.zoomMin, CONFIG.zoomMax);
   tileWidth = CONFIG.tileWidth * zoom;
@@ -1136,41 +1053,7 @@ function crearZoomUI() {
 }
 document.addEventListener("DOMContentLoaded", crearZoomUI);
 
-// === ACCIONES MANUALES CON PATHFINDING ===
-function handlePointerEvent(e) {
-  if (isPanning) return; // No mover criatura si estamos arrastrando el mapa
-  e.preventDefault();
-  const dpr = window.devicePixelRatio || 1;
-  const rect = canvas.getBoundingClientRect();
-  let mx, my;
-  if (e.touches && e.touches.length) {
-    mx = e.touches[0].clientX - rect.left;
-    my = e.touches[0].clientY - rect.top;
-  } else {
-    mx = e.clientX - rect.left;
-    my = e.clientY - rect.top;
-  }
-  mx = mx / dpr;
-  my = my / dpr;
-
-  let clickTile = null, minDist = 999;
-  for (let x = 0; x < CONFIG.gridWidth; x++) for (let y = 0; y < CONFIG.gridHeight; y++) {
-    let { x: sx, y: sy } = isoToScreen(x, y);
-    let cx = sx + tileWidth / 2, cy = sy + tileHeight / 2;
-    let dist = Math.hypot(mx - cx, my - cy);
-    if (dist < minDist && dist < tileWidth / 2) { minDist = dist; clickTile = { x, y }; }
-  }
-  if (!clickTile) return;
-  let sel = criaturas[0];
-  if (sel.posicion.x === clickTile.x && sel.posicion.y === clickTile.y) return;
-  if (!inBounds(clickTile.x, clickTile.y)) return;
-  // Pathfinding hacia clickTile
-  sel.path = findPath(sel.posicion, clickTile);
-  // Al llegar a la meta, si hay objeto, usarlo
-  sel.pathObjTarget = CONFIG.objetos.find(o => o.pos.x === clickTile.x && o.pos.y === clickTile.y);
-}
-
-// === BOTÓN LLAMAR A CRIS Y ESCUCHAR MÚSICA ===
+// --- BOTONES EXTRAS ---
 function crearBotonesExtra() {
   let btnCris = document.createElement('button');
   btnCris.id = "btn-cris";
@@ -1189,7 +1072,7 @@ function crearBotonesExtra() {
 }
 document.addEventListener("DOMContentLoaded", crearBotonesExtra);
 
-// === INICIO ===
+// --- INICIO ---
 async function main() {
   await loadConfig();
   tileWidth = CONFIG.tileWidth;
@@ -1208,8 +1091,3 @@ async function main() {
   chequearInactividad();
 }
 main();
-
-function actualizarUI() {
-  renderCriaturasPanel();
-  renderStatOverlay();
-}
