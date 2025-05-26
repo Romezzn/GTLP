@@ -57,7 +57,22 @@
     "cama": { "energia": 100 },
     "cris-visita": { "ansiedad": -30, "saludMental": 18 },
     "cris-llamada": { "ansiedad": -9, "saludMental": 10, "felicidad": 10 },
-    "musica": { "felicidad": 4, "ansiedad": -6, "saludMental": 4 }
+    "musica": { "felicidad": 4, "ansiedad": -6, "saludMental": 4 },
+    "picadura-insecto": { "saludFisica": -10, "ansiedad": 10 },
+    "lesion-gym": { "saludFisica": -25, "felicidad": -10, "energia": -25, "ansiedad": 14 },
+    "lesion-casa": { "saludFisica": -5, "felicidad": -3 },
+    "reunion-trabajo": { "ansiedad": 18 },
+    "enfermedad-hospital": { "saludFisica": -20, "ansiedad": 10, "felicidad": -10 },
+    "enfermedad-grave": { "saludFisica": -45, "ansiedad": 30, "felicidad": -35 },
+    "depresion": { "felicidad": -15, "energia": -10, "ansiedad": 10 }
+  },
+  "eventos": {
+    "picaduraInsecto": { "zonas": ["parque"], "prob": 0.09, "efecto": "picadura-insecto", "msg": "¡Te ha picado un insecto! (parque)" },
+    "lesionGym": { "zonas": ["gimnasio"], "prob": 0.11, "efecto": "lesion-gym", "msg": "¡Te has lesionado haciendo ejercicio! (gimnasio)" },
+    "lesionCasa": { "zonas": ["casa"], "prob": 0.03, "efecto": "lesion-casa", "msg": "¡Te has hecho daño en casa!" },
+    "reunionTrabajo": { "zonas": ["trabajo"], "prob": 0.12, "efecto": "reunion-trabajo", "msg": "¡Reunión sorpresa en el trabajo! (ansiedad+)" },
+    "enfermarHospital": { "zonas": ["hospital"], "prob": 0.08, "efecto": "enfermedad-hospital", "msg": "¡Te has contagiado en el hospital!" },
+    "enfermedadGrave": { "zonas": ["hospital"], "prob": 0.025, "efecto": "enfermedad-grave", "msg": "¡Te han detectado una enfermedad grave!" }
   },
   "modificadoresZona": {
     "calle": { "saludMental": -0.19, "ansiedad": 0.18 },
@@ -81,10 +96,11 @@
       "energia": 75,
       "confianza": 60,
       "saludFisica": 100,
-      "saludMental": 90
+      "saludMental": 90,
+      "depresion": 0
     },
     "vinculo": 60,
-    "tlpActivo": false,
+    "tlpActivo": true,
     "estadoEmocional": "feliz",
     "posicion": { "x": 8, "y": 8 }
   },
