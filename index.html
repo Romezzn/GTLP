@@ -36,7 +36,6 @@
       justify-content: center;
       min-width: 0;
       min-height: 0;
-      /* Prevent scrollbars */
       overflow: hidden;
     }
     #canvas {
@@ -66,6 +65,7 @@
       justify-content: flex-start;
       height: calc(100vh - 36px);
       overflow-y: auto;
+      transition: width 0.2s, min-width 0.2s, max-width 0.2s;
     }
     .criatura {
       background: #222a;
@@ -145,10 +145,29 @@
       min-width: 360px;
       text-align: center;
     }
-    @media (max-width: 1100px) {
-      #main { flex-direction: column; }
-      #canvas-container { width: 100vw; height: 55vw; min-height: 300px; }
-      #sidepanel { margin: 0 auto 10px auto; width: 98vw; max-width: 98vw; }
+    @media (max-width: 900px) {
+      #main {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      #canvas-container {
+        width: 100vw;
+        height: 55vw;
+        min-height: 300px;
+      }
+      #sidepanel {
+        width: 97vw;
+        max-width: 97vw;
+        min-width: 0;
+        margin: 8px auto 8px auto;
+        padding: 8px 7vw 12px 7vw;
+        font-size: 1em;
+        box-sizing: border-box;
+        /* Ocupa menos vertical */
+        height: auto;
+        max-height: 250px;
+        overflow-y: auto;
+      }
       #event-log {
         right: 6vw;
         left: 6vw;
@@ -161,6 +180,16 @@
         padding: 5px 5vw 5px 5vw;
       }
     }
+    @media (max-width: 600px) {
+      #sidepanel {
+        padding: 4px 2vw 8px 2vw;
+        font-size: 0.94em;
+        max-height: 160px;
+      }
+      #main-controls {
+        font-size: 0.94em;
+      }
+    }
     button { font-family: inherit; }
   </style>
 </head>
@@ -170,40 +199,33 @@
       <canvas id="canvas" tabindex="0"></canvas>
     </div>
     <div id="sidepanel">
-      <h2 style="margin-top:0;margin-bottom:10px;">Tamagotchi TLP</h2>
+      <h2 style="margin-top:0;margin-bottom:10px;font-size:1.3em;">Tamagotchi TLP</h2>
       <div id="criaturasPanel"></div>
       <div id="main-controls">
         <b>Turno:</b> <span id="turnoNum">0</span>
       </div>
-      <div style="margin-top:16px; font-size:0.93em; color:#8af;">
-        <p>
-          Cuida de tu criatura, explora zonas y mantén su ánimo.<br>
-          Si dejas de interactuar más de <b>5 segundos</b>, perderá confianza y vínculo rápidamente.<br>
-          Cada minuto se pasa un turno automáticamente.<br>
-          Usa el mapa para mover tu criatura y descubre sorpresas.
+      <div style="margin-top:10px; font-size:0.93em; color:#8af;">
+        <p style="margin:0;">
+          Cuida de tu criatura.<br>
+          Si dejas de interactuar más de <b>5s</b>, perderá confianza y vínculo.<br>
+          Cada minuto se pasa un turno.
         </p>
       </div>
     </div>
   </div>
-  <!-- El log flotante lo crea game.js dinámicamente -->
   <audio id="moveSfx" src="move.wav"></audio>
   <audio id="okSfx" src="ok.wav"></audio>
   <audio id="errSfx" src="err.wav"></audio>
   <script>
-    // Ajuste automático del canvas para ocupar el máximo espacio disponible y centrarse
     function resizeCanvas() {
       const canvas = document.getElementById('canvas');
       const container = document.getElementById('canvas-container');
-      // Deja espacio para sidepanel en desktop
-      let panelWidth = 350;
-      if (window.innerWidth < 1100) panelWidth = 0;
+      let panelWidth = (window.innerWidth > 900) ? 350 : 0;
       const w = window.innerWidth - panelWidth - 40;
       const h = window.innerHeight - 36;
-      // Tamaño base del mapa
       const aspect = 24 / 16;
       let cw = Math.min(w, h * aspect);
       let ch = Math.min(h, w / aspect);
-      // Ajusta para contener el mapa completo y bien centrado
       canvas.width = Math.round(cw);
       canvas.height = Math.round(ch);
       canvas.style.width = cw + 'px';
