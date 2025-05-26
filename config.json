@@ -29,7 +29,7 @@
   "turno": 60000,
   "gameTick": 500,
   "ticksPerTurn": 120,
-  "inactividadMs": 5000,
+  "inactividadMs": 10000,
   "cooldowns": {
     "pelota": 5,
     "arbol": 6,
@@ -56,7 +56,7 @@
     "gimnasio": { "saludFisica": 18, "saludMental": 13, "energia": -20, "ansiedad": -16 },
     "cama": { "energia": 100 },
     "cris-visita": { "ansiedad": -30, "saludMental": 18 },
-    "cris-llamada": { "ansiedad": -9, "saludMental": 5 },
+    "cris-llamada": { "ansiedad": -90, "saludMental": 5 },
     "musica": { "felicidad": 16, "ansiedad": -10, "saludMental": 7 }
   },
   "modificadoresZona": {
