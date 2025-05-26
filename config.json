@@ -62,14 +62,14 @@
   "modificadoresZona": {
     "calle": { "saludMental": -0.19, "ansiedad": 0.18 },
     "trabajo": { "energia": -0.09, "saludMental": -0.04, "ansiedad": -0.15 },
-    "parque": { "felicidad": 0.11, "ansiedad": -0.14 }
-    "casa": { "felicidad": -0.11, "saludFisica": 18, "ansiedad": -0.14 }
+    "parque": { "felicidad": 0.11, "ansiedad": -0.14 },
+    "casa": { "felicidad": -0.11, "saludFisica": -0.48, "ansiedad": -0.14 },
+    "restaurante": {"saludFisica": -1}
   },
   "modificadoresGlobales": {
     "hambre": 0.12,
     "energia": -0.16,
     "felicidad": -0.24,
-    "saludFisica": -1
   },
   "psicologoMinDias": 20,
   "trabajoDias": [1, 2, 3, 4, 5],
