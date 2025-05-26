@@ -28,6 +28,9 @@ let criaturas = [], turno = 0, currentTick = 0, eventLog = [];
 let ultimaAccion = Date.now(), zoom = 1.0, tileWidth, tileHeight, selected = 0;
 let canvas, ctx;
 
+// === LOGS SCROLL ===
+let eventLogScroll = 0;
+
 // === ESTADO DE CRIS ===
 let crisVisitDays = []; // Días del mes en que Cris aparece
 let crisOnMap = false;
@@ -357,21 +360,72 @@ function usarObjeto(c, obj, mostrarMsg = true) {
 // === LOGS Y PANEL ===
 function logMsg(msg, type = "") {
   eventLog.push({ msg, type, t: Date.now() });
-  if (eventLog.length > 30) eventLog.shift();
+  if (eventLog.length > 100) eventLog.shift();
   renderLog();
 }
+
+// Nuevo renderLog visual avanzado
 function renderLog() {
-  const eventLogDiv = document.getElementById('event-log');
-  if (eventLogDiv)
-    eventLogDiv.innerHTML = eventLog.map(e => `<div class="log-msg ${e.type || ""}">${e.msg}</div>`).join('');
-}
-function actualizarUI() {
-  const turnoNum = document.getElementById('turnoNum');
-  if (turnoNum) turnoNum.textContent = turno;
-  renderCriaturasPanel();
-  renderEntorno();
-  renderLog();
-  renderStatOverlay();
+  let eventLogDiv = document.getElementById('event-log');
+  if (!eventLogDiv) {
+    eventLogDiv = document.createElement('div');
+    eventLogDiv.id = 'event-log';
+    eventLogDiv.style = `
+      position:fixed;
+      right:24px;
+      bottom:180px;
+      width:340px;
+      max-height:65vh;
+      min-height:54px;
+      z-index:200;
+      display:flex;
+      flex-direction:column-reverse;
+      overflow-y:auto;
+      padding:0;
+      pointer-events:auto;
+      align-items:flex-end;
+      background:transparent;
+    `;
+    eventLogDiv.tabIndex = 0;
+    document.body.appendChild(eventLogDiv);
+
+    // Scroll con rueda del ratón
+    eventLogDiv.addEventListener('wheel', (e) => {
+      if (e.deltaY < 0) eventLogScroll = Math.min(eventLogScroll + 1, eventLog.length - 1);
+      else eventLogScroll = Math.max(eventLogScroll - 1, 0);
+      renderLog();
+      e.preventDefault();
+    }, { passive: false });
+  }
+
+  // Mostrar 12 mensajes como máximo (puedes ajustar)
+  let visibleCount = 12;
+  let logsToShow = eventLog.slice(-visibleCount - eventLogScroll, eventLog.length - eventLogScroll);
+
+  eventLogDiv.innerHTML = logsToShow.map((e, idx) => {
+    let alpha;
+    if (idx === logsToShow.length - 1) { // último (más nuevo)
+      alpha = 1;
+    } else {
+      // transparencia progresiva para los anteriores, pero mínimo 0.18
+      alpha = Math.max(1 - 0.11 * (logsToShow.length - 1 - idx), 0.18);
+    }
+    return `<div class="log-msg ${e.type || ''}" style="
+      margin-bottom:2.5px;
+      padding:8px 16px;
+      border-radius:9px;
+      font-size:1.17em;
+      background:rgba(26,32,34,${alpha});
+      color:rgba(255,255,255,${alpha + 0.13});
+      box-shadow:0 2px 14px #0004;
+      font-weight:${idx === logsToShow.length - 1 ? 'bold' : 'normal'};
+      filter:blur(${idx === logsToShow.length - 1 ? '0px' : '0.1px'});
+      transition:background 0.25s, color 0.3s, opacity 0.2s;
+      opacity:1;
+      ">
+      ${e.msg}
+    </div>`;
+  }).join('');
 }
 function renderCriaturasPanel() {
   const criaturasPanel = document.getElementById('criaturasPanel');
