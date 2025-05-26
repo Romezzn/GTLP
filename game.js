@@ -428,11 +428,54 @@ function renderCriaturasPanel() {
   criaturasPanel.appendChild(div);
 }
 function renderStatBar(name, val, color) {
-  return `<div class="stat-bar" title="${name}" style="position:relative; height:18px; background:#3335; border-radius:7px; margin:4px 0 3px 0;">
-    <span class="stat-fill" style="position:absolute; left:0; top:0; height:18px; border-radius:7px; background:${color}; width:${clamp(val,0,100)}%;"></span>
-    <span class="stat-text" style="position:absolute; left:10px; top:0; font-size:13px; color:#fff;">${name}: ${Math.round(val)}</span>
-  </div>`;
+  const isMobile = window.matchMedia("(max-width: 900px)").matches;
+  if (!isMobile) {
+    // Horizontal para escritorio
+    return `<div class="stat-bar" title="${name}" style="position:relative; height:18px; background:#3335; border-radius:7px; margin:4px 0 3px 0;">
+      <span class="stat-fill" style="position:absolute; left:0; top:0; height:18px; border-radius:7px; background:${color}; width:${clamp(val,0,100)}%;"></span>
+      <span class="stat-text" style="position:absolute; left:10px; top:0; font-size:13px; color:#fff;">${name}: ${Math.round(val)}</span>
+    </div>`;
+  } else {
+    // Vertical para móvil
+    return `<div class="stat-bar-vert" title="${name}" style="position:relative; width:28px; height:90px; background:#3335; border-radius:9px; margin:5px 5px 5px 5px; display:flex; flex-direction:column; align-items:center; justify-content:flex-end;">
+      <span class="stat-fill-vert" style="position:absolute; left:0; bottom:0; width:100%; border-radius:9px; background:${color}; height:${clamp(val,0,100)}%; transition:height 0.3s;"></span>
+      <span class="stat-icon" style="position:relative; z-index:2; margin-top:4px; font-size:1.1em;">${getEmojiForStat(name)}</span>
+      <span class="stat-value" style="position:relative; z-index:2; margin-bottom:4px; font-size:0.93em; color:#fff; font-weight:bold;">${Math.round(val)}</span>
+      <span class="stat-label" style="position:relative; z-index:2; margin-bottom:3px; font-size:0.81em; color:#cdf;">${nameShort(name)}</span>
+    </div>`;
+  }
 }
+
+// Emoji asociados a cada stat
+function getEmojiForStat(name) {
+  switch (name.toLowerCase()) {
+    case "hambre": return "😋";
+    case "felicidad": return "😊";
+    case "energía": case "energia": return "⚡";
+    case "confianza": return "🤝";
+    case "vínculo": case "vinculo": return "💞";
+    case "salud mental": return "🧠";
+    case "salud física": case "salud fisica": return "💪";
+    case "ansiedad": return "😰";
+    default: return "🔹";
+  }
+}
+
+// Nombre corto para móviles
+function nameShort(name) {
+  switch (name.toLowerCase()) {
+    case "hambre": return "Ham";
+    case "felicidad": return "Feli";
+    case "energía": case "energia": return "En";
+    case "confianza": return "Con";
+    case "vínculo": case "vinculo": return "Vín";
+    case "salud mental": return "Ment";
+    case "salud física": case "salud fisica": return "Fís";
+    case "ansiedad": return "Ans";
+    default: return name.slice(0,3);
+  }
+}
+
 function renderStatOverlay() {
   let overlay = document.getElementById('stat-overlay');
   if (!overlay) {
@@ -448,19 +491,41 @@ function renderStatOverlay() {
   }
   let c = criaturas[0];
   let fecha = getGameDateTime();
-  overlay.innerHTML = `
-    <div style="display:flex;align-items:center;justify-content:center;gap:2.2em;">
-      <b>${c.nombre}</b>
-      <span>😋${Math.round(c.stats.hambre)}</span>
-      <span>${getEstadoEmoji(c)}${Math.round(c.stats.felicidad)}</span>
-      <span>⚡${Math.round(c.stats.energia)}</span>
-      <span>🤝${Math.round(c.vinculo)}</span>
-      <span>🧠${Math.round(c.stats.saludMental)}</span>
-      <span>💪${Math.round(c.stats.saludFisica)}</span>
-      <span>😰${Math.round(c.ansiedad)}</span>
-      <span style="margin-left:24px;">${fecha.str}</span>
-    </div>
-  `;
+
+  // Días para móvil: 📅 L M X J V S D
+  const diasLetras = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
+  const isMobile = window.matchMedia("(max-width: 900px)").matches;
+  if (!isMobile) {
+    overlay.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:center;gap:2.2em;">
+        <b>${c.nombre}</b>
+        <span>😋${Math.round(c.stats.hambre)}</span>
+        <span>${getEstadoEmoji(c)}${Math.round(c.stats.felicidad)}</span>
+        <span>⚡${Math.round(c.stats.energia)}</span>
+        <span>🤝${Math.round(c.vinculo)}</span>
+        <span>🧠${Math.round(c.stats.saludMental)}</span>
+        <span>💪${Math.round(c.stats.saludFisica)}</span>
+        <span>😰${Math.round(c.ansiedad)}</span>
+        <span style="margin-left:24px;">${fecha.str}</span>
+      </div>
+    `;
+  } else {
+    overlay.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:center;gap:1.1em;">
+        <b>${c.nombre}</b>
+        <span>😋${Math.round(c.stats.hambre)}</span>
+        <span>${getEstadoEmoji(c)}${Math.round(c.stats.felicidad)}</span>
+        <span>⚡${Math.round(c.stats.energia)}</span>
+        <span>🤝${Math.round(c.vinculo)}</span>
+        <span>🧠${Math.round(c.stats.saludMental)}</span>
+        <span>💪${Math.round(c.stats.saludFisica)}</span>
+        <span>😰${Math.round(c.ansiedad)}</span>
+      </div>
+      <div style="margin-top:6px;font-size:1.2em;text-align:center;">
+        📅 <span style="font-size:1.13em;letter-spacing:.23em;">${diasLetras[fecha.jsDay]}</span>
+      </div>
+    `;
+  }
 }
 
 // === ENTORNO Y ANIMACIÓN ===
