@@ -12,8 +12,8 @@
     { "nombre": "Gimnasio", "emoji": "🏋️", "id": "gimnasio", "fromX": 19, "fromY": 8, "toX": 23, "toY": 15, "color": "#99bbff" }
   ],
   "objetos": [
-    { "id": "pelota", "name": "Pelota", "icon": "⚽", "zona": "parque", "pos": { "x": 2, "y": 5 } },
-    { "id": "arbol", "name": "Árbol", "icon": "🌳", "zona": "parque", "pos": { "x": 4, "y": 5 } },
+    { "id": "pelota", "name": "Pelota", "icon": "⚽", "zona": "parque", "pos": { "x": 4, "y": 2 } },
+    { "id": "arbol", "name": "Árbol", "icon": "🌳", "zona": "parque", "pos": { "x": 3, "y": 4 } },
     { "id": "medikit", "name": "Botiquín", "icon": "💊", "zona": "hospital", "pos": { "x": 20, "y": 3 } },
     { "id": "psicologo", "name": "Psicólogo", "icon": "🧑‍⚕️", "zona": "hospital", "pos": { "x": 18, "y": 2 } },
     { "id": "banera", "name": "Bañera", "icon": "🛁", "zona": "casa", "pos": { "x": 3, "y": 13 } },
