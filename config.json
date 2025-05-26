@@ -47,17 +47,17 @@
     "pelota": { "felicidad": 15 },
     "arbol": { "hambre": -25, "energia": 10 },
     "medikit": { "saludFisica": 20, "saludMental": 10 },
-    "psicologo": { "saludMental": 25, "confianza": 10 },
+    "psicologo": { "saludMental": 25, "confianza": 10, "ansiedad": -40 },
     "banera": { "felicidad": 10, "saludMental": 15 },
     "comida-casa": { "hambre": -18, "energia": 5 },
     "chocolate": { "felicidad": 50 },
     "libro": { "confianza": 10, "felicidad": 5 },
-    "puesto-trabajo": {},
+    "puesto-trabajo": { "ansiedad": -20 },
     "gimnasio": { "saludFisica": 18, "saludMental": 13, "energia": -20, "ansiedad": -16 },
     "cama": { "energia": 100 },
     "cris-visita": { "ansiedad": -30, "saludMental": 18 },
-    "cris-llamada": { "ansiedad": -90, "saludMental": 5 },
-    "musica": { "felicidad": 16, "ansiedad": -10, "saludMental": 7 }
+    "cris-llamada": { "ansiedad": -9, "saludMental": 10, "felicidad": 10 },
+    "musica": { "felicidad": 4, "ansiedad": -6, "saludMental": 4 }
   },
   "modificadoresZona": {
     "calle": { "saludMental": -0.19, "ansiedad": 0.18 },
@@ -100,5 +100,8 @@
   "zoomMax": 2.2,
   "zoomStep": 0.18,
   "canvasOffsetX": 800,
-  "canvasOffsetY": 140
+  "canvasOffsetY": 140,
+  "felicidadAnsiedadUmbral": 50,
+  "felicidadAnsiedadDecaimiento": 12,
+  "accionRebajaAnsiedad": { "min": 3, "max": 6 }
 }
