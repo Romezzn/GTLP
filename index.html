@@ -239,14 +239,14 @@
       #stat-vertical {
         display: flex !important;
         position: fixed;
-        top: 0; right: 0;
+        top: 0; left: 0;
         height: 100vh;
         width: 52px;
         flex-direction: column;
         align-items: center;
         z-index: 110;
         background: rgba(30,34,48,0.94);
-        border-radius: 0 0 0 18px;
+        border-radius: 0 18px 18px 0;
         box-shadow: 0 0 14px #2229;
         padding: 7px 2px 12px 2px;
         gap: 9px;
@@ -380,12 +380,15 @@
   <script src="game.js"></script>
   <!-- UI móvil: stats barra vertical y menú objetos -->
   <script>
-    // Barra de stats vertical móvil
+    // Barra de stats vertical móvil - ahora a la IZQUIERDA y robusta para "cargando"
     function renderStatVertical() {
       const c = window.criaturas?.[0] || (window.CONFIG && window.CONFIG.personaje);
-      if (!c) return;
       const el = document.getElementById('stat-vertical');
       if (!el) return;
+      if (!c || !c.stats) {
+        el.innerHTML = '<div style="margin-top:2em;color:#fff;font-size:1.1em;">Cargando…</div>';
+        return;
+      }
       el.innerHTML = [
         { k:'hambre',     em:'😋', col:'#b3b703', lbl:'Ham', v:c.stats?.hambre || 0 },
         { k:'felicidad',  em:'😊', col:'#f2c53d', lbl:'Feli', v:c.stats?.felicidad || 0 },
