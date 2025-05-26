@@ -26,10 +26,10 @@
   ],
   "segundo": 1000,
   "minuto": 60000,
-  "turno": 180000,              // 1 turno = 3 minutos (antes 1 minuto)
-  "gameTick": 1000,             // 1 tick = 1 segundo (antes 500ms)
-  "ticksPerTurn": 180,          // 180 ticks para un turno de 3 minutos
-  "inactividadMs": 25000,       // 25 segundos para inactividad (antes 10s)
+  "turno": 180000,             
+  "gameTick": 1000,             
+  "ticksPerTurn": 180,          
+  "inactividadMs": 25000,       
   "cooldowns": {
     "pelota": 8,
     "arbol": 10,
