@@ -1018,6 +1018,7 @@ function gameLoop(ts) {
 function actualizarUI() {
   renderCriaturasPanel();
   renderStatOverlay();
+  try { if (window.innerWidth <= 800 && window.renderStatVertical) window.renderStatVertical(); } catch(e){}
 }
 
 // --- INACTIVIDAD ---
