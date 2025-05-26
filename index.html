@@ -61,6 +61,7 @@
       box-shadow: 0 2px 18px #0008;
       max-width: 98vw;
       max-height: 93vh;
+      image-rendering: pixelated;
       transition: box-shadow .15s;
     }
 
@@ -295,6 +296,32 @@
   <audio id="moveSfx" src="move.wav"></audio>
   <audio id="okSfx" src="ok.wav"></audio>
   <audio id="errSfx" src="err.wav"></audio>
+  <script>
+    function resizeCanvas() {
+      // Tamaño máximo visible que no deforma el canvas
+      const canvas = document.getElementById('canvas');
+      const dpr = window.devicePixelRatio || 1;
+      // Calcula el tamaño real disponible
+      const container = document.getElementById('canvas-container');
+      let w = container.offsetWidth;
+      let h = container.offsetHeight;
+      // Si estamos en móvil, el container puede tener height=0, usar window size
+      if (!h) h = window.innerHeight;
+      if (!w) w = window.innerWidth;
+      // Mantén aspecto
+      const aspect = 24 / 16;
+      let cw = Math.min(w, h * aspect);
+      let ch = Math.min(h, w / aspect);
+      // Ajusta el tamaño físico (para evitar pixelado)
+      canvas.width = Math.round(cw * dpr);
+      canvas.height = Math.round(ch * dpr);
+      canvas.style.width = cw + 'px';
+      canvas.style.height = ch + 'px';
+      // Si tienes game.js cargado, puedes llamar a actualizarUI o renderEntorno aquí si lo deseas
+    }
+    window.addEventListener('resize', resizeCanvas);
+    window.addEventListener('DOMContentLoaded', resizeCanvas);
+  </script>
   <script src="game.js"></script>
 </body>
 </html>
