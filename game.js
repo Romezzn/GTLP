@@ -502,7 +502,7 @@ function renderLog() {
   }).join('');
 }
 
-// === PANEL DE CRIATURA CON BARRAS ===
+// === PANEL DE CRIATURA CON BARRAS Y OBJETOS INTERACTIVOS ===
 function renderCriaturasPanel() {
   const criaturasPanel = document.getElementById('criaturasPanel');
   if (!criaturasPanel) return;
@@ -527,6 +527,224 @@ function renderCriaturasPanel() {
     <div>Turno: ${turno}</div>
   `;
   criaturasPanel.appendChild(div);
+  renderObjetosInteractivos();
+}
+
+// === OBJETOS INTERACTIVOS PANEL ===
+let objetoEstado = {}; // { id: "idle"/"inprogress"/"done"/"cooldown"/"blocked" }
+
+function renderObjetosInteractivos() {
+  let panel = document.getElementById('objetosPanel');
+  if (!panel) {
+    panel = document.createElement('div');
+    panel.id = "objetosPanel";
+    panel.className = "panel-section";
+    panel.style.marginTop = "18px";
+    document.getElementById('sidepanel').appendChild(panel);
+  }
+  panel.innerHTML = "<b>Objetos:</b><br>";
+
+  CONFIG.objetos.forEach(obj => {
+    // Estado del objeto para el color:
+    let c = criaturas[0];
+    let estado = "idle";
+    let cooldown = c.cooldowns[obj.id] || 0;
+    if (cooldown > 0) {
+      estado = "cooldown";
+    } else if (objetoEstado[obj.id] === "inprogress") {
+      estado = "inprogress";
+    } else if (objetoEstado[obj.id] === "done") {
+      estado = "done";
+    } else {
+      // ¿Se puede usar?
+      if (!puedeUsarObjeto(c, obj)) {
+        estado = "blocked";
+      }
+    }
+    // Crea el botón/visual:
+    let button = document.createElement('button');
+    button.className = "objeto-boton";
+    button.innerHTML = `<span style="font-size:1.4em;">${obj.icon}</span> ${obj.name}`;
+    button.style.margin = "4px 7px 4px 0";
+    button.style.borderRadius = "9px";
+    button.style.padding = "8px 12px";
+    button.style.fontWeight = "bold";
+    button.style.fontFamily = "inherit";
+    button.style.fontSize = "1em";
+    button.style.border = "none";
+    button.style.boxShadow = "0 6px 0 0 #a00";
+    button.style.transition = "all 0.15s";
+    button.style.filter = "drop-shadow(0 2px 2px #211c)";
+    button.style.cursor = "pointer";
+    button.disabled = false;
+
+    // Estilo según estado
+    if (estado === "idle") {
+      button.style.background = "#222";
+      button.style.color = "#fff";
+      button.style.boxShadow = "0 6px 0 0 #e44";
+    } else if (estado === "inprogress") {
+      button.style.background = "#ffe066";
+      button.style.color = "#222";
+      button.style.boxShadow = "0 6px 0 0 #bfa900";
+      button.disabled = true;
+    } else if (estado === "done") {
+      button.style.background = "#1fc73a";
+      button.style.color = "#fff";
+      button.style.boxShadow = "0 6px 0 0 #0b5c1e";
+      button.disabled = true;
+    } else if (estado === "cooldown") {
+      button.style.background = "#d6d6d6";
+      button.style.color = "#aaa";
+      button.style.boxShadow = "0 6px 0 0 #555";
+      button.disabled = true;
+      button.title = "En cooldown";
+    } else if (estado === "blocked") {
+      button.style.background = "#111";
+      button.style.color = "#888";
+      button.style.boxShadow = "0 6px 0 0 #000";
+      button.disabled = true;
+      button.title = "No se puede usar ahora";
+    }
+
+    // Acción de click
+    button.onclick = () => {
+      if (estado !== "idle") return;
+      objetoEstado[obj.id] = "inprogress";
+      renderObjetosInteractivos();
+      // Asigna path al objeto para ir hacia él; la acción real se realiza al llegar
+      let c = criaturas[0];
+      c.path = findPath(c.posicion, obj.pos);
+      c.pathObjTarget = obj;
+    };
+
+    // Adjuntar al panel
+    panel.appendChild(button);
+  });
+}
+
+// Determina si el objeto está disponible para usarse (sin cooldown, stats no saturados, etc.)
+function puedeUsarObjeto(c, obj) {
+  // Chequeo similar al de usarObjeto pero sin modificar nada
+  let efecto = getEfectoById(obj.id);
+  if ((c.cooldowns[obj.id] || 0) > 0) return false;
+  let saturado = false;
+  for (let k in efecto) {
+    if (k === "hambre" && efecto[k] < 0 && c.stats.hambre <= 0) saturado = true;
+    else if (k === "hambre" && efecto[k] > 0 && c.stats.hambre >= 100) saturado = true;
+    else if (k !== "hambre" && (c.stats[k] !== undefined) && efecto[k] > 0 && c.stats[k] >= 100) saturado = true;
+    else if (k !== "hambre" && (c.stats[k] !== undefined) && efecto[k] < 0 && c.stats[k] <= 0) saturado = true;
+  }
+  if (saturado) return false;
+  // Otros requisitos especiales:
+  if (obj.id === "puesto-trabajo" && !c.puedeVisitarTrabajo()) return false;
+  if (obj.id === "psicologo" && !c.puedeVisitarPsicologo()) return false;
+  return true;
+}
+
+// === ACCIONES MANUALES CON PATHFINDING (mejorado para objetos) ===
+function handlePointerEvent(e) {
+  if (isPanning) return; // No mover criatura si estamos arrastrando el mapa
+  e.preventDefault();
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  let mx, my;
+  if (e.touches && e.touches.length) {
+    mx = e.touches[0].clientX - rect.left;
+    my = e.touches[0].clientY - rect.top;
+  } else {
+    mx = e.clientX - rect.left;
+    my = e.clientY - rect.top;
+  }
+  mx = mx / dpr;
+  my = my / dpr;
+
+  let clickTile = null, minDist = 999;
+  for (let x = 0; x < CONFIG.gridWidth; x++) for (let y = 0; y < CONFIG.gridHeight; y++) {
+    let { x: sx, y: sy } = isoToScreen(x, y);
+    let cx = sx + tileWidth / 2, cy = sy + tileHeight / 2;
+    let dist = Math.hypot(mx - cx, my - cy);
+    if (dist < minDist && dist < tileWidth / 2) { minDist = dist; clickTile = { x, y }; }
+  }
+  if (!clickTile) return;
+  let sel = criaturas[0];
+  if (sel.posicion.x === clickTile.x && sel.posicion.y === clickTile.y) return;
+  if (!inBounds(clickTile.x, clickTile.y)) return;
+
+  // ¿Hay un objeto en esa casilla?
+  let obj = CONFIG.objetos.find(o => o.pos.x === clickTile.x && o.pos.y === clickTile.y);
+  if (obj && puedeUsarObjeto(sel, obj)) {
+    // Simula click en panel de objeto
+    objetoEstado[obj.id] = "inprogress";
+    renderObjetosInteractivos();
+    sel.path = findPath(sel.posicion, obj.pos);
+    sel.pathObjTarget = obj;
+    return;
+  }
+  // Pathfinding hacia clickTile normal
+  sel.path = findPath(sel.posicion, clickTile);
+  sel.pathObjTarget = undefined;
+}
+
+// === Mejorar lógica de ejecución de objetos al llegar ===
+function tickJuego() {
+  currentTick++;
+  let c = criaturas[0];
+  if (!c.moving && c.moverSiguienteAuto) c.moverSiguienteAuto();
+
+  // Si el personaje llegó a un objeto marcado como destino
+  if (!c.moving && c.pathObjTarget) {
+    let obj = c.pathObjTarget;
+    if (c.posicion.x === obj.pos.x && c.posicion.y === obj.pos.y) {
+      // Ejecuta el objeto solo si es usable
+      if (puedeUsarObjeto(c, obj)) {
+        let ok = usarObjeto(c, obj, true);
+        if (ok) {
+          objetoEstado[obj.id] = "done";
+          renderObjetosInteractivos();
+          setTimeout(() => {
+            objetoEstado[obj.id] = undefined;
+            renderObjetosInteractivos();
+          }, 2000);
+        } else {
+          objetoEstado[obj.id] = "blocked";
+          renderObjetosInteractivos();
+          setTimeout(() => {
+            objetoEstado[obj.id] = undefined;
+            renderObjetosInteractivos();
+          }, 1500);
+        }
+      } else {
+        objetoEstado[obj.id] = "blocked";
+        renderObjetosInteractivos();
+        setTimeout(() => {
+          objetoEstado[obj.id] = undefined;
+          renderObjetosInteractivos();
+        }, 1500);
+      }
+      c.pathObjTarget = undefined;
+    }
+  }
+
+  let fecha = getGameDateTime();
+  if (turno === 0 || fecha.date === 1) planificarVisitasCris();
+  if (crisVisitDays.includes(fecha.date) && !crisOnMap) iniciarVisitaCris();
+  if (crisOnMap && turno >= crisTurnoFinaliza) finalizarVisitaCris();
+
+  if (currentTick >= CONFIG.ticksPerTurn) {
+    turno++; currentTick = 0;
+    if (c.actualizarEstadoTurno) c.actualizarEstadoTurno();
+    let puestoTrabajoObj = getObjById("puesto-trabajo");
+    if (c.puedeVisitarTrabajo && c.puedeVisitarTrabajo() && c.posicion.x === puestoTrabajoObj.pos.x && c.posicion.y === puestoTrabajoObj.pos.y) {
+      usarObjeto(c, puestoTrabajoObj, true);
+    }
+    if (c.puedeVisitarPsicologo && c.puedeVisitarPsicologo() && c.posicion.x === getObjById('psicologo').pos.x && c.posicion.y === getObjById('psicologo').pos.y) {
+      c.visitarPsicologo();
+    }
+    renderLog();
+  }
+  actualizarUI();
+  setTimeout(tickJuego, CONFIG.gameTick);
 }
 function renderStatBar(name, val, color) {
   const isMobile = window.matchMedia("(max-width: 900px)").matches;
