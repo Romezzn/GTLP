@@ -31,17 +31,17 @@
   "ticksPerTurn": 180,          
   "inactividadMs": 25000,       
   "cooldowns": {
-    "pelota": 8,
-    "arbol": 10,
-    "medikit": 15,
-    "psicologo": 30,
-    "banera": 8,
-    "comida-casa": 10,
-    "chocolate": 18,
-    "libro": 12,
+    "pelota": 1,
+    "arbol": 1,
+    "medikit": 1,
+    "psicologo": 20,
+    "banera": 1,
+    "comida-casa": 1,
+    "chocolate": 1,
+    "libro": 1,
     "puesto-trabajo": 1,
-    "gimnasio": 10,
-    "cama": 18
+    "gimnasio": 1,
+    "cama": 1
   },
   "efectos": {
     "pelota": { "felicidad": 10 },
@@ -64,15 +64,15 @@
     "reunion-trabajo": { "ansiedad": 7 },
     "enfermedad-hospital": { "saludFisica": -8, "ansiedad": 3, "felicidad": -5 },
     "enfermedad-grave": { "saludFisica": -18, "ansiedad": 12, "felicidad": -14 },
-    "depresion": { "felicidad": -7, "energia": -5, "ansiedad": 6 }
+    "depresion": { "felicidad": -100, "energia": -15, "ansiedad": 100 }
   },
   "eventos": {
-    "picaduraInsecto": { "zonas": ["parque"], "prob": 0.012, "efecto": "picadura-insecto", "msg": "¡Te ha picado un insecto! (parque)" },
-    "lesionGym": { "zonas": ["gimnasio"], "prob": 0.018, "efecto": "lesion-gym", "msg": "¡Te has lesionado haciendo ejercicio! (gimnasio)" },
-    "lesionCasa": { "zonas": ["casa"], "prob": 0.008, "efecto": "lesion-casa", "msg": "¡Te has hecho daño en casa!" },
-    "reunionTrabajo": { "zonas": ["trabajo"], "prob": 0.016, "efecto": "reunion-trabajo", "msg": "¡Reunión sorpresa en el trabajo! (ansiedad+)" },
-    "enfermarHospital": { "zonas": ["hospital"], "prob": 0.011, "efecto": "enfermedad-hospital", "msg": "¡Te has contagiado en el hospital!" },
-    "enfermedadGrave": { "zonas": ["hospital"], "prob": 0.004, "efecto": "enfermedad-grave", "msg": "¡Te han detectado una enfermedad grave!" }
+    "picaduraInsecto": { "zonas": ["parque"], "prob": 0.008, "efecto": "picadura-insecto", "msg": "¡Te ha picado un insecto! (parque)" },
+    "lesionGym": { "zonas": ["gimnasio"], "prob": 0.008, "efecto": "lesion-gym", "msg": "¡Te has lesionado haciendo ejercicio! (gimnasio)" },
+    "lesionCasa": { "zonas": ["casa"], "prob": 0.003, "efecto": "lesion-casa", "msg": "¡Te has hecho daño en casa!" },
+    "reunionTrabajo": { "zonas": ["trabajo"], "prob": 0.018, "efecto": "reunion-trabajo", "msg": "¡Reunión sorpresa en el trabajo! (ansiedad+)" },
+    "enfermarHospital": { "zonas": ["hospital"], "prob": 0.002, "efecto": "enfermedad-hospital", "msg": "¡Te has contagiado en el hospital!" },
+    "enfermedadGrave": { "zonas": ["hospital"], "prob": 0.001, "efecto": "enfermedad-grave", "msg": "¡Te han detectado una enfermedad grave!" }
   },
   "modificadoresZona": {
     "calle": { "saludMental": -0.04, "ansiedad": 0.06 },
