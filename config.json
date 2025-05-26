@@ -60,16 +60,15 @@
     "musica": { "felicidad": 4, "ansiedad": -6, "saludMental": 4 }
   },
   "modificadoresZona": {
-    "calle": { "saludMental": -0.19, "ansiedad": 0.18 },
-    "trabajo": { "energia": -0.09, "saludMental": -0.04, "ansiedad": -0.15 },
+    "calle": { "saludMental": -0.19, "ansiedad": 0.28 },
+    "trabajo": { "energia": -0.29, "saludMental": -0.44, "ansiedad": -0.15 },
     "parque": { "felicidad": 0.11, "ansiedad": -0.14 }
   },
   "modificadoresGlobales": {
     "hambre": 0.14,
     "energia": -0.16,
     "felicidad": -0.04,
-    "saludFisica": -0.18,
-    "ansiedad": 0.18
+    "saludFisica": -0.18
   },
   "psicologoMinDias": 20,
   "personaje": {
