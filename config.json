@@ -119,5 +119,8 @@
   "turnoConfianza": 10,
   "turnoVinculo": 10,
   "turnoAnsiedadRebaja": 7,
-  "trabajoNoHechoAnsiedad": 18
+  "trabajoNoHechoAnsiedad": 18,
+
+  "enableRandomEvents": true,
+  "enableNormalEvents": true
 }
