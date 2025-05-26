@@ -25,7 +25,6 @@
       min-height: 100vh;
       overflow: hidden;
     }
-
     #main {
       display: flex;
       flex-direction: row;
@@ -36,7 +35,6 @@
       box-sizing: border-box;
       background: linear-gradient(120deg, #292c3b 0%, #313d51 100%);
     }
-
     #canvas-container {
       flex: 1 1 auto;
       display: flex;
@@ -64,7 +62,6 @@
       image-rendering: pixelated;
       transition: box-shadow .15s;
     }
-
     #sidepanel {
       min-width: 340px;
       max-width: 420px;
@@ -100,7 +97,6 @@
     #sidepanel .panel-section {
       margin-bottom: 1.25em;
     }
-
     .criatura {
       background: var(--color-card);
       border-radius: 13px;
@@ -117,7 +113,6 @@
       box-shadow: 0 0 0 1.5px var(--color-glow),0 2px 15px #000a;
       background: #27365daa;
     }
-
     .stat-bar, .stat-bar-vert {
       margin-bottom: 0.4em;
     }
@@ -128,13 +123,12 @@
     .stat-bar-vert {
       margin: 0 4px 0 0;
     }
-
     #event-log {
       position: fixed;
+      top: 18px;
       right: 32px;
-      bottom: 140px;
       width: 360px;
-      max-height: 68vh;
+      max-height: 32vh;
       min-height: 54px;
       z-index: 200;
       display: flex;
@@ -146,12 +140,10 @@
       font-size: 1.1em;
       pointer-events: none;
     }
-
     .log-msg.good { color: #8bffad; }
     .log-msg.warn { color: #ffd176; }
     .log-msg.emo { color: #9ad2ff; }
     .log-msg { margin-bottom: 3px; }
-
     #stat-overlay {
       position: fixed;
       top: 0;
@@ -171,7 +163,6 @@
       letter-spacing: 0.04em;
       border: 1.5px solid #7fd1fa44;
     }
-
     /* Zoom buttons */
     .zoom-ui {
       position: fixed;
@@ -202,7 +193,6 @@
       background: #5396e0;
       color: #fff;
     }
-
     /* Floating buttons */
     .floating-btn {
       position: fixed;
@@ -223,43 +213,103 @@
     #btn-cris:hover { background: #5162e6; }
     #btn-musica { bottom: 90px; background: #2196f3; }
     #btn-musica:hover { background: #5bb0f8; }
-
-    @media (max-width: 1100px) {
-      #main { flex-direction: column; }
-      #sidepanel {
-        margin: 0 auto 14px auto;
-        min-width: unset; max-width: unset; width: 99vw;
-        border-radius: 0 0 26px 26px;
-      }
-      #canvas-container { margin: 0 auto; }
-      #event-log {
-        left: 3vw;
-        right: 3vw;
-        width: auto;
-        min-width: 140px;
-      }
-      #stat-overlay {
-        min-width: 140px;
-        font-size: 1em;
-        padding: 7px 5vw 7px 5vw;
-      }
-    }
+    /* --- MOVIL: barra lateral de stats y menú de objetos --- */
     @media (max-width: 800px) {
-      #sidepanel { padding: 8px 8vw 12px 8vw; }
-      .criatura { padding: 10px 6vw 10px 6vw; }
-      #stat-overlay { padding: 6px 2vw 6px 2vw; }
-      .zoom-ui { right: 3vw; top: 50px; }
-    }
-    @media (max-width: 600px) {
-      #sidepanel {
-        padding: 2px 1vw 6px 1vw;
-        font-size: 0.95em;
-        max-height: 162px;
+      #main { flex-direction: column; }
+      #sidepanel, #stat-overlay {
+        display: none !important;
       }
-      #main-controls { font-size: 0.95em; }
-      .zoom-ui { right: 5vw; top: 20px; }
-      #canvas-container { margin: 0 auto; }
-      #event-log { right: 2vw; left: 2vw; }
+      #canvas-container {
+        margin: 0 !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        min-width: 100vw !important;
+        min-height: 100vh !important;
+      }
+      #canvas {
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        max-width: 100vw !important;
+        max-height: 100vh !important;
+        width: 100vw !important;
+        height: 100vh !important;
+      }
+      #stat-vertical {
+        display: flex !important;
+        position: fixed;
+        top: 0; right: 0;
+        height: 100vh;
+        width: 52px;
+        flex-direction: column;
+        align-items: center;
+        z-index: 110;
+        background: rgba(30,34,48,0.94);
+        border-radius: 0 0 0 18px;
+        box-shadow: 0 0 14px #2229;
+        padding: 7px 2px 12px 2px;
+        gap: 9px;
+      }
+      .stat-mini {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        font-size: 0.81em;
+        color: #fff;
+        margin-bottom: 1.1em;
+      }
+      .stat-mini .em { font-size: 1.23em; }
+      .stat-mini .val { font-size: 0.95em; margin-top: -2px; }
+      .stat-mini .lbl { font-size: 0.82em; color: #8fe; margin-top: -2px; }
+      #mobile-obj-btn {
+        display: flex;
+        position: fixed;
+        right: 16px; bottom: 16px;
+        z-index: 220;
+        background: #1e3055;
+        border-radius: 50%;
+        box-shadow: 0 2px 12px #0007;
+        width: 54px; height: 54px;
+        align-items: center; justify-content: center;
+        font-size: 2em; color: #fff;
+        border: 2px solid #6cf;
+        cursor: pointer;
+      }
+      #mobile-obj-panel {
+        display: none;
+        position: fixed;
+        left: 0; top: 0; right: 0; bottom: 0;
+        z-index: 500;
+        background: rgba(10,16,30,0.97);
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 22px;
+      }
+      #mobile-obj-panel.active {
+        display: flex;
+      }
+      .objeto-boton-mobile {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 1.2em;
+        background: #263d5e;
+        color: #fff;
+        border-radius: 12px;
+        border: none;
+        padding: 13px 20px;
+        box-shadow: 0 2px 11px #0007;
+        font-weight: bold;
+        margin-bottom: 8px;
+        cursor: pointer;
+      }
+    }
+    @media (min-width: 801px) {
+      #stat-vertical, #mobile-obj-btn, #mobile-obj-panel {
+        display: none !important;
+      }
     }
     button { font-family: inherit; }
   </style>
@@ -269,6 +319,12 @@
   <div id="main">
     <div id="canvas-container">
       <canvas id="canvas" tabindex="0"></canvas>
+      <!-- Barra de stats vertical en móvil -->
+      <div id="stat-vertical"></div>
+      <!-- Botón menú objetos móvil -->
+      <button id="mobile-obj-btn" title="Objetos" style="display:none;"><span>🎒</span></button>
+      <!-- Panel de objetos móvil -->
+      <div id="mobile-obj-panel"></div>
     </div>
     <div id="sidepanel">
       <h1>Tamagotchi TLP</h1>
@@ -317,11 +373,83 @@
       canvas.height = Math.round(ch * dpr);
       canvas.style.width = cw + 'px';
       canvas.style.height = ch + 'px';
-      // Si tienes game.js cargado, puedes llamar a actualizarUI o renderEntorno aquí si lo deseas
     }
     window.addEventListener('resize', resizeCanvas);
     window.addEventListener('DOMContentLoaded', resizeCanvas);
   </script>
   <script src="game.js"></script>
+  <!-- UI móvil: stats barra vertical y menú objetos -->
+  <script>
+    // Barra de stats vertical móvil
+    function renderStatVertical() {
+      const c = window.criaturas?.[0] || (window.CONFIG && window.CONFIG.personaje);
+      if (!c) return;
+      const el = document.getElementById('stat-vertical');
+      if (!el) return;
+      el.innerHTML = [
+        { k:'hambre',     em:'😋', col:'#b3b703', lbl:'Ham', v:c.stats?.hambre || 0 },
+        { k:'felicidad',  em:'😊', col:'#f2c53d', lbl:'Feli', v:c.stats?.felicidad || 0 },
+        { k:'energia',    em:'⚡', col:'#19d5e4', lbl:'En', v:c.stats?.energia || 0 },
+        { k:'confianza',  em:'🤝', col:'#b39ddb', lbl:'Con', v:c.stats?.confianza || 0 },
+        { k:'vinculo',    em:'💞', col:'#ec6', lbl:'Vín', v:c.vinculo || 0 },
+        { k:'saludMental',em:'🧠', col:'#21e27b', lbl:'Ment', v:c.stats?.saludMental || 0 },
+        { k:'saludFisica',em:'💪', col:'#f58f3b', lbl:'Fís', v:c.stats?.saludFisica || 0 },
+        { k:'ansiedad',   em:'😰', col:'#e56', lbl:'Ans', v:c.ansiedad || 0 },
+        { k:'depresion',  em:'🥀', col:'#5a34a3', lbl:'Dep', v:c.stats?.depresion || 0 }
+      ].map(stat =>
+        `<div class="stat-mini" style="color:${stat.col}">
+          <span class="em">${stat.em}</span>
+          <span class="val">${Math.round(stat.v)}</span>
+          <span class="lbl">${stat.lbl}</span>
+        </div>`
+      ).join('');
+    }
+    // Menú de objetos móvil
+    function renderMobileObjetos() {
+      const panel = document.getElementById('mobile-obj-panel');
+      if (!panel) return;
+      panel.innerHTML = '<button onclick="document.getElementById(\'mobile-obj-panel\').classList.remove(\'active\')" style="position:absolute;top:24px;right:32px;font-size:2.2em;background:none;border:none;color:#fff;z-index:900;">✖️</button>';
+      if (!window.CONFIG || !window.criaturas) return;
+      const c = window.criaturas[0];
+      window.CONFIG.objetos.forEach(obj => {
+        let cooldown = c.cooldowns?.[obj.id] || 0;
+        let blocked = !window.puedeUsarObjeto ? false : !window.puedeUsarObjeto(c, obj);
+        let disabled = cooldown > 0 || blocked;
+        let btn = document.createElement('button');
+        btn.className = "objeto-boton-mobile";
+        btn.innerHTML = `<span style="font-size:1.5em">${obj.icon}</span> <span>${obj.name}</span>`;
+        btn.disabled = disabled;
+        btn.style.opacity = disabled ? 0.6 : 1;
+        btn.onclick = () => {
+          if (disabled) return;
+          document.getElementById('mobile-obj-panel').classList.remove('active');
+          if (window.usarObjeto) window.usarObjeto(c, obj, true);
+        };
+        panel.appendChild(btn);
+      });
+    }
+    // Mostrar/ocultar menú objetos móvil
+    function showMobileObjBtnIfNeeded() {
+      const btn = document.getElementById('mobile-obj-btn');
+      if (window.innerWidth <= 800) btn.style.display = 'flex';
+      else btn.style.display = 'none';
+    }
+    document.getElementById('mobile-obj-btn').onclick = () => {
+      document.getElementById('mobile-obj-panel').classList.add('active');
+      renderMobileObjetos();
+    };
+    window.renderStatVertical = renderStatVertical;
+    window.renderMobileObjetos = renderMobileObjetos;
+    window.addEventListener('resize', showMobileObjBtnIfNeeded);
+    window.addEventListener('DOMContentLoaded', showMobileObjBtnIfNeeded);
+    // Llama a renderStatVertical en cada UI update (hazlo desde game.js también)
+    function tryMobileUIUpdate() {
+      if (window.innerWidth <= 800) {
+        renderStatVertical();
+      }
+    }
+    window.addEventListener('resize', tryMobileUIUpdate);
+    window.addEventListener('DOMContentLoaded', tryMobileUIUpdate);
+  </script>
 </body>
 </html>
