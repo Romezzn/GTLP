@@ -243,18 +243,26 @@ class Criatura {
     }
     if (this.ansiedad > 0) this.ansiedad -= (CONFIG.turnoAnsiedadRebaja || 5);
 
-    // Depresión
+    // Depresión activa: si ansiedad > 70 y felicidad < 35, depresión está activa
     if (this.ansiedad > 70 && this.stats.felicidad < 35) {
-      this.stats.depresion = clamp(this.stats.depresion + 12, 0, 100);
+      if (!this.depresionActivo) {
+        logMsg("¡Cuidado! Estás entrando en depresión.", "warn");
+      }
       this.depresionActivo = true;
-      logMsg("¡Cuidado! Estás entrando en depresión.", "warn");
+    } else {
+      this.depresionActivo = false;
+    }
+
+    // Subida diaria de depresión si está activa
+    if (this.depresionActivo) {
+      // Sube la depresión según config
+      this.stats.depresion = clamp(this.stats.depresion + (CONFIG.turnoDepresionSubida || 20), 0, 100);
       let ef = getEfectoById("depresion");
       for (let k in ef) {
         if (k in this.stats) this.stats[k] = clamp(this.stats[k] + ef[k], 0, 100);
         else if (k === "ansiedad") this.ansiedad = clamp(this.ansiedad + ef[k], 0, 100);
       }
     } else {
-      this.depresionActivo = false;
       if (this.stats.depresion > 0) this.stats.depresion = clamp(this.stats.depresion - 8, 0, 100);
     }
 
