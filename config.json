@@ -26,9 +26,9 @@
   ],
   "segundo": 1000,
   "minuto": 60000,
-  "turno": 180000,             
+  "turno": 90000,             
   "gameTick": 1000,             
-  "ticksPerTurn": 180,          
+  "ticksPerTurn": 90,          
   "inactividadMs": 25000,       
   "cooldowns": {
     "pelota": 1,
@@ -120,6 +120,7 @@
   "turnoVinculo": 7,
   "turnoAnsiedadRebaja": 5,
   "trabajoNoHechoAnsiedad": 8,
+  "turnoDepresionSubida": 20,
   "enableRandomEvents": true,
   "enableNormalEvents": true
 }
