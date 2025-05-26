@@ -27,12 +27,10 @@ function inBounds(x, y) { return x >= 0 && y >= 0 && x < CONFIG.gridWidth && y <
 let criaturas = [], turno = 0, currentTick = 0, eventLog = [];
 let ultimaAccion = Date.now(), zoom = 1.0, tileWidth, tileHeight, selected = 0;
 let canvas, ctx;
-
-// === LOGS SCROLL ===
 let eventLogScroll = 0;
 
 // === ESTADO DE CRIS ===
-let crisVisitDays = []; // Días del mes en que Cris aparece
+let crisVisitDays = [];
 let crisOnMap = false;
 let crisTurnoFinaliza = -1;
 let crisPos = null;
@@ -41,15 +39,15 @@ let crisLlamadaUltima = -1000;
 // === FECHA Y TIEMPO DE JUEGO ===
 const WEEK_DAYS = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 function getGameDateTime() {
-  let start = new Date(2025, 0, 6, 8, 0, 0, 0); // 6 de enero de 2025 es lunes
+  let start = new Date(2025, 0, 6, 8, 0, 0, 0);
   let now = start.getTime() + turno * 24 * 60 * 60 * 1000;
   let d = new Date(now);
-  let dayOfWeek = d.getDay(); // 0=Domingo ... 6=Sabado
+  let dayOfWeek = d.getDay();
   let humanDay = WEEK_DAYS[dayOfWeek];
   return {
     str: `Día ${turno + 1} (${humanDay})`,
     day: turno + 1,
-    weekDay: (dayOfWeek === 0 ? 7 : dayOfWeek), // 1=Lunes, 7=Domingo
+    weekDay: (dayOfWeek === 0 ? 7 : dayOfWeek),
     weekDayName: humanDay,
     date: d.getDate(),
     month: d.getMonth() + 1,
@@ -57,12 +55,11 @@ function getGameDateTime() {
   };
 }
 function esFinDeSemana(weekDay) {
-  return weekDay === 6 || weekDay === 7; // Sabado=6, Domingo=7
+  return weekDay === 6 || weekDay === 7;
 }
 
 // === CRIS: GESTIÓN DE VISITAS ALEATORIAS ===
 function planificarVisitasCris() {
-  let fecha = getGameDateTime();
   let daysInMonth = 30;
   let days = [];
   let min = CONFIG.cris.aparicionMin, max = CONFIG.cris.aparicionMax;
@@ -92,8 +89,6 @@ function finalizarVisitaCris() {
   crisTurnoFinaliza = -1;
   crisPos = null;
 }
-
-// === LLAMADA A CRIS ===
 function llamarACris() {
   if (turno === crisLlamadaUltima) {
     logMsg("¡Ya has llamado a Cris hoy!", "warn");
@@ -127,12 +122,11 @@ function escucharMusica() {
 }
 
 // === EMOJI SEGÚN ESTADO DE ÁNIMO ===
-function getEstadoEmoji(criatura) {
-  const f = criatura.stats.felicidad;
-  const a = criatura.ansiedad;
-  const m = criatura.stats.saludMental;
-
-  if (criatura.estadoEmocional === 'enCrisis' || (a > 85 && m < 40)) return "🥵";
+function getEstadoEmoji(c) {
+  const f = c.stats.felicidad;
+  const a = c.ansiedad;
+  const m = c.stats.saludMental;
+  if (c.estadoEmocional === 'enCrisis' || (a > 85 && m < 40)) return "🥵";
   if (m < 30 && a > 70) return "😱";
   if (a > 80) return "😰";
   if (a > 60) return "😟";
@@ -160,15 +154,13 @@ class Criatura {
     this.cuentaExp = {};
     this.generation = 1;
   }
-
   clampStats() {
     for (const stat in this.stats)
       this.stats[stat] = clamp(this.stats[stat], 0, 100);
     this.ansiedad = clamp(this.ansiedad, 0, 100);
   }
-
   actualizarEstadoProgresivo(dt) {
-    // Aplica modificadores globales y de zona para TODOS los stats, incluyendo ansiedad
+    // Modificadores globales
     for (const stat in CONFIG.modificadoresGlobales) {
       if (stat === "ansiedad") this.ansiedad += CONFIG.modificadoresGlobales[stat] * dt;
       else if (this.stats[stat] !== undefined)
@@ -182,7 +174,6 @@ class Criatura {
         this.stats[stat] += modZ[stat] * dt;
     this.clampStats();
   }
-
   actualizarEstadoTurno() {
     this.stats.confianza = clamp(this.stats.confianza + (CONFIG.turnoConfianza || 10), 0, 100);
     this.vinculo = clamp((this.vinculo || 0) + (CONFIG.turnoVinculo || 10), 0, 100);
@@ -195,20 +186,18 @@ class Criatura {
       (!this.lastTrabajoTurn || this.lastTrabajoTurn !== turno - 1)
     ) {
       this.ansiedad = clamp((this.ansiedad || 0) + (CONFIG.trabajoNoHechoAnsiedad || 18), 0, 100);
-      logMsg("Te has saltado el trabajo: sube la ansiedad.", "warn");
+      logMsg("¡Uy! Se te olvidó trabajar. ¡La ansiedad sube!", "warn");
     }
     if (this.ansiedad > 0) {
       let mentalPenalty = Math.floor(this.ansiedad / 10);
       this.stats.saludMental = clamp(this.stats.saludMental - mentalPenalty, 0, 100);
     }
-    // --- AJUSTE: Si ansiedad > UMBRAL, felicidad baja rápido (valores del JSON)
     if (this.ansiedad > (CONFIG.felicidadAnsiedadUmbral ?? 50)) {
       this.stats.felicidad = clamp(
         this.stats.felicidad - (CONFIG.felicidadAnsiedadDecaimiento ?? 12),
         0, 100
       );
     }
-    // Decaimiento por turno (parametrizable)
     if (this.ansiedad > 0) this.ansiedad -= (CONFIG.turnoAnsiedadRebaja || 7);
     if (this.stats.felicidad > 70) this.estadoEmocional = 'feliz';
     else if (this.stats.felicidad < 30) this.estadoEmocional = 'triste';
@@ -223,20 +212,19 @@ class Criatura {
     }
     this.clampStats();
   }
-
   puedeVisitarPsicologo() {
     return (turno - this.lastPsicologoTurn) >= CONFIG.psicologoMinDias;
   }
   visitarPsicologo() {
     if (!this.puedeVisitarPsicologo()) { logMsg("¡Debes esperar 20 días entre visitas al psicólogo!", "warn"); return false; }
-    if (this.stats.saludMental >= 100 && this.stats.confianza >= 100) { logMsg("No necesitas al psicólogo ahora.", "warn"); return false; }
+    if (this.stats.saludMental >= 100 && this.stats.confianza >= 100) { logMsg("¡No necesitas al psicólogo ahora!", "warn"); return false; }
     let efecto = getEfectoById("psicologo");
     this.stats.saludMental = clamp(this.stats.saludMental + (efecto.saludMental || 0), 0, 100);
     this.stats.confianza = clamp(this.stats.confianza + (efecto.confianza || 0), 0, 100);
     this.ansiedad = clamp(this.ansiedad + (efecto.ansiedad || 0), 0, 100);
     this.lastPsicologoTurn = turno;
     this.cooldowns.psicologo = CONFIG.cooldowns.psicologo * CONFIG.turno;
-    logMsg("Has visitado al psicólogo.", "good");
+    logMsg("¡Sesión con el psicólogo terminada!", "good");
     return true;
   }
   puedeVisitarTrabajo() {
@@ -251,10 +239,9 @@ class Criatura {
     this.stats.saludMental = clamp(this.stats.saludMental + (efecto.saludMental || -6), 0, 100);
     this.stats.felicidad = clamp(this.stats.felicidad + (efecto.felicidad || 7), 0, 100);
     this.lastTrabajoTurn = turno;
-    logMsg("Has ido al trabajo.", "good");
+    logMsg("¡Has ido a trabajar! ☕", "good");
     return true;
   }
-
   moverSiguienteAuto() {
     let dirs = [
       { x: 1, y: 0 }, { x: -1, y: 0 }, { x: 0, y: 1 }, { x: 0, y: -1 },
@@ -269,7 +256,6 @@ class Criatura {
     }
     this.moveToAnim({ x: nx, y: ny });
   }
-
   moveToAnim(target) {
     this.moving = true;
     this.moveAnim = {
@@ -308,9 +294,7 @@ function usarObjeto(c, obj, mostrarMsg = true) {
     else if (k !== "hambre" && (c.stats[k] !== undefined) && efecto[k] > 0 && c.stats[k] >= 100) saturado = true;
     else if (k !== "hambre" && (c.stats[k] !== undefined) && efecto[k] < 0 && c.stats[k] <= 0) saturado = true;
   }
-  if (saturado) { if (mostrarMsg) logMsg("Tus stats ya están al máximo, no necesitas " + obj.name + ".", "warn"); return false; }
-
-  // Puesto de trabajo: solo activa visita al trabajo
+  if (saturado) { if (mostrarMsg) logMsg("¡Tus stats ya están al máximo, no necesitas " + obj.name + "!", "warn"); return false; }
   if (obj.id === "puesto-trabajo") {
     if (c.puedeVisitarTrabajo()) {
       c.visitarTrabajo();
@@ -321,7 +305,6 @@ function usarObjeto(c, obj, mostrarMsg = true) {
       return false;
     }
   }
-  // Gimnasio: salud física, salud mental, baja ansiedad y energía
   if (obj.id === "gimnasio") {
     let e = getEfectoById("gimnasio");
     c.stats.saludFisica = clamp(c.stats.saludFisica + (e.saludFisica || 0), 0, 100);
@@ -332,7 +315,6 @@ function usarObjeto(c, obj, mostrarMsg = true) {
     if (mostrarMsg) logMsg("Has entrenado en el gimnasio. 💪", "good");
     return true;
   }
-  // Cama: energía al máximo
   if (obj.id === "cama") {
     c.stats.energia = 100;
     c.cooldowns.cama = CONFIG.cooldowns.cama * CONFIG.minuto;
@@ -342,7 +324,7 @@ function usarObjeto(c, obj, mostrarMsg = true) {
   if (obj.id === "chocolate" && c.stats.felicidad < 50) {
     c.stats.felicidad = 50;
     c.cooldowns.chocolate = CONFIG.cooldowns.chocolate * CONFIG.minuto;
-    if (mostrarMsg) logMsg("Has comido chocolate.", "good");
+    if (mostrarMsg) logMsg("Has comido chocolate. ¡Ñom!", "good");
     return true;
   }
   for (let k in efecto) {
@@ -354,7 +336,6 @@ function usarObjeto(c, obj, mostrarMsg = true) {
     else if (k === "saludMental") c.stats.saludMental = clamp(c.stats.saludMental + efecto[k], 0, 100);
     else if (k === "ansiedad") c.ansiedad = clamp(c.ansiedad + efecto[k], 0, 100);
   }
-  // --- AJUSTE: rebaja de ansiedad extra por acción (excepto trabajo y psicólogo)
   if (obj.id !== "puesto-trabajo" && obj.id !== "psicologo" && CONFIG.accionRebajaAnsiedad) {
     c.ansiedad = clamp(
       c.ansiedad - randomInt(CONFIG.accionRebajaAnsiedad.min, CONFIG.accionRebajaAnsiedad.max),
@@ -362,41 +343,66 @@ function usarObjeto(c, obj, mostrarMsg = true) {
     );
   }
   c.cooldowns[obj.id] = (CONFIG.cooldowns[obj.id] || 5) * (["psicologo"].includes(obj.id) ? CONFIG.turno : CONFIG.minuto);
-  if (mostrarMsg) logMsg("Has usado " + obj.name + ".", "good");
+  if (mostrarMsg) logMsg("¡Has usado " + obj.name + "!", "good");
   return true;
 }
 
-// === LOGS Y PANEL DIVERTIDOS ===
+// === LOGS Y PANEL VISUAL ===
 function logMsg(msg, type = "") {
-  // Mensajes random divertidos para el tipo "good"
-  if (type === "good") {
-    const frases = [
-      "¡Eso fue genial! 😃",
-      "¡Buen trabajo! 🚀",
-      "¡Tu criatura está encantada! 🥚✨",
-      "¡Eso sí que anima el día!",
-      "¡Lo lograste, eres un crack! 😎",
-      "¡Qué buena decisión! 👏"
-    ];
-    if (Math.random() < 0.45) msg += "<br><i>" + frases[randomInt(0, frases.length - 1)] + "</i>";
-  }
-  // Mensajes random para "warn"
-  if (type === "warn") {
-    const frases = [
-      "Ups... ¡Cuidado! 😬",
-      "¡Ojo! Eso no le ha gustado...",
-      "Vigila tus decisiones 🤔",
-      "¡No te descuides tanto! 😅",
-      "¡Ay! Eso no era lo mejor..."
-    ];
-    if (Math.random() < 0.42) msg += "<br><i>" + frases[randomInt(0, frases.length - 1)] + "</i>";
-  }
   eventLog.push({ msg, type, t: Date.now() });
   if (eventLog.length > 100) eventLog.shift();
   renderLog();
 }
+function renderLog() {
+  let eventLogDiv = document.getElementById('event-log');
+  if (!eventLogDiv) {
+    eventLogDiv = document.createElement('div');
+    eventLogDiv.id = 'event-log';
+    eventLogDiv.style = `
+      position:fixed;
+      right:24px;
+      bottom:180px;
+      width:340px;
+      max-height:65vh;
+      min-height:54px;
+      z-index:200;
+      display:flex;
+      flex-direction:column-reverse;
+      overflow-y:auto;
+      padding:0;
+      pointer-events:auto;
+      align-items:flex-end;
+      background:transparent;
+    `;
+    eventLogDiv.tabIndex = 0;
+    document.body.appendChild(eventLogDiv);
 
-// === BARRAS DE ESTADO — SIEMPRE FUNCIONALES ===
+    eventLogDiv.addEventListener('wheel', (e) => {
+      if (e.deltaY < 0) eventLogScroll = Math.min(eventLogScroll + 1, eventLog.length - 1);
+      else eventLogScroll = Math.max(eventLogScroll - 1, 0);
+      renderLog();
+      e.preventDefault();
+    }, { passive: false });
+  }
+  let visibleCount = 12;
+  let logsToShow = eventLog.slice(-visibleCount - eventLogScroll, eventLog.length - eventLogScroll);
+  eventLogDiv.innerHTML = logsToShow.map((e, idx) => {
+    let alpha;
+    if (idx === logsToShow.length - 1) alpha = 1;
+    else alpha = Math.max(1 - 0.11 * (logsToShow.length - 1 - idx), 0.18);
+    return `<div class="log-msg ${e.type || ''}" style="
+      margin-bottom:2.5px; padding:8px 16px; border-radius:9px;
+      font-size:1.17em; background:rgba(26,32,34,${alpha});
+      color:rgba(255,255,255,${alpha + 0.13});
+      box-shadow:0 2px 14px #0004; font-weight:${idx === logsToShow.length - 1 ? 'bold' : 'normal'};
+      filter:blur(${idx === logsToShow.length - 1 ? '0px' : '0.1px'});
+      transition:background 0.25s, color 0.3s, opacity 0.2s; opacity:1;">
+      ${e.msg}
+    </div>`;
+  }).join('');
+}
+
+// === PANEL DE CRIATURA CON BARRAS ===
 function renderCriaturasPanel() {
   const criaturasPanel = document.getElementById('criaturasPanel');
   if (!criaturasPanel) return;
@@ -421,15 +427,12 @@ function renderCriaturasPanel() {
   `;
   criaturasPanel.appendChild(div);
 }
-
 function renderStatBar(name, val, color) {
-  // Aseguramos la estructura y el color
   return `<div class="stat-bar" title="${name}" style="position:relative; height:18px; background:#3335; border-radius:7px; margin:4px 0 3px 0;">
     <span class="stat-fill" style="position:absolute; left:0; top:0; height:18px; border-radius:7px; background:${color}; width:${clamp(val,0,100)}%;"></span>
     <span class="stat-text" style="position:absolute; left:10px; top:0; font-size:13px; color:#fff;">${name}: ${Math.round(val)}</span>
   </div>`;
 }
-
 function renderStatOverlay() {
   let overlay = document.getElementById('stat-overlay');
   if (!overlay) {
@@ -460,14 +463,13 @@ function renderStatOverlay() {
   `;
 }
 
-// === ENTORNO Y ANIMACIÓN: AGREGAR CRIS Y NOMBRES DE ZONAS ===
+// === ENTORNO Y ANIMACIÓN ===
 function renderEntorno() {
   if (!canvas) return;
   ctx.save();
   ctx.setTransform(zoom, 0, 0, zoom, 0, 0);
   ctx.clearRect(0, 0, canvas.width / zoom, canvas.height / zoom);
 
-  // Zonas de color y nombre
   for (const z of CONFIG.zonas.concat([{ nombre: "Calle", emoji: "🚶", id: "calle", fromX: 0, fromY: 0, toX: CONFIG.gridWidth - 1, toY: CONFIG.gridHeight - 1, color: "#555" }])) {
     ctx.save();
     ctx.globalAlpha = z.id === "calle" ? 0.10 : 0.20;
@@ -482,7 +484,6 @@ function renderEntorno() {
       ctx.closePath();
       ctx.fill();
     }
-    // Nombre de la zona con emoji en el centro
     if (z.id !== "calle") {
       let cx = Math.floor((z.fromX + z.toX) / 2), cy = Math.floor((z.fromY + z.toY) / 2);
       let { x: nx, y: ny } = isoToScreen(cx, cy);
@@ -495,7 +496,6 @@ function renderEntorno() {
     }
     ctx.restore();
   }
-  // Grid
   ctx.strokeStyle = "#444";
   for (let x = 0; x < CONFIG.gridWidth; x++) for (let y = 0; y < CONFIG.gridHeight; y++) {
     let { x: sx, y: sy } = isoToScreen(x, y);
@@ -507,7 +507,6 @@ function renderEntorno() {
     ctx.closePath();
     ctx.stroke();
   }
-  // Objetos
   CONFIG.objetos.forEach(obj => {
     let { x: sx, y: sy } = isoToScreen(obj.pos.x, obj.pos.y);
     ctx.font = "38px serif";
@@ -520,7 +519,6 @@ function renderEntorno() {
     ctx.fillStyle = "#fff";
     ctx.globalAlpha = 1;
   });
-  // Dibuja a Cris si está en el mapa
   if (crisOnMap && crisPos) {
     let { x: sx, y: sy } = isoToScreen(crisPos.x, crisPos.y);
     ctx.save();
@@ -541,7 +539,6 @@ function renderEntorno() {
     ctx.fillText(CONFIG.cris.emoji, sx + tileWidth / 2, sy + tileHeight / 2 + 8);
     ctx.restore();
   }
-  // Tamago
   let c = criaturas[0];
   let pos = c.getPosAnim ? c.getPosAnim() : c.posicion;
   let { x: sx, y: sy } = isoToScreen(pos.x, pos.y);
@@ -589,7 +586,6 @@ function tickJuego() {
   let c = criaturas[0];
   if (!c.moving && c.moverSiguienteAuto) c.moverSiguienteAuto();
 
-  // --- GESTIÓN DE VISITAS DE CRIS ---
   let fecha = getGameDateTime();
   if (turno === 0 || fecha.date === 1) planificarVisitasCris();
   if (crisVisitDays.includes(fecha.date) && !crisOnMap) iniciarVisitaCris();
@@ -598,7 +594,6 @@ function tickJuego() {
   if (currentTick >= CONFIG.ticksPerTurn) {
     turno++; currentTick = 0;
     if (c.actualizarEstadoTurno) c.actualizarEstadoTurno();
-    let fecha = getGameDateTime();
     let puestoTrabajoObj = getObjById("puesto-trabajo");
     if (c.puedeVisitarTrabajo && c.puedeVisitarTrabajo() && c.posicion.x === puestoTrabajoObj.pos.x && c.posicion.y === puestoTrabajoObj.pos.y) {
       usarObjeto(c, puestoTrabajoObj, true);
@@ -621,7 +616,7 @@ function chequearInactividad() {
     c.vinculo = clamp((c.vinculo || 0) - 20, 0, 100);
     c.stats.saludMental = clamp(c.stats.saludMental - 10, 0, 100);
     c.ansiedad = clamp(c.ansiedad + 15, 0, 100);
-    logMsg("Te has descuidado, baja la confianza y el vínculo!", "warn");
+    logMsg("¡Te has descuidado! Baja la confianza y el vínculo!", "warn");
     ultimaAccion = Date.now();
     actualizarUI();
   }
@@ -690,7 +685,6 @@ function handlePointerEvent(e) {
 
 // === BOTÓN LLAMAR A CRIS Y ESCUCHAR MÚSICA ===
 function crearBotonesExtra() {
-  // Llamar a Cris
   let btnCris = document.createElement('button');
   btnCris.id = "btn-cris";
   btnCris.textContent = "📞 Llamar a Cris";
@@ -704,7 +698,6 @@ function crearBotonesExtra() {
   btnCris.onclick = llamarACris;
   document.body.appendChild(btnCris);
 
-  // Escuchar Música
   let btnMusica = document.createElement('button');
   btnMusica.id = "btn-musica";
   btnMusica.textContent = "🎵 Escuchar Música";
