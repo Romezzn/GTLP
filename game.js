@@ -366,78 +366,37 @@ function usarObjeto(c, obj, mostrarMsg = true) {
   return true;
 }
 
-// === LOGS Y PANEL ===
+// === LOGS Y PANEL DIVERTIDOS ===
 function logMsg(msg, type = "") {
+  // Mensajes random divertidos para el tipo "good"
+  if (type === "good") {
+    const frases = [
+      "¡Eso fue genial! 😃",
+      "¡Buen trabajo! 🚀",
+      "¡Tu criatura está encantada! 🥚✨",
+      "¡Eso sí que anima el día!",
+      "¡Lo lograste, eres un crack! 😎",
+      "¡Qué buena decisión! 👏"
+    ];
+    if (Math.random() < 0.45) msg += "<br><i>" + frases[randomInt(0, frases.length - 1)] + "</i>";
+  }
+  // Mensajes random para "warn"
+  if (type === "warn") {
+    const frases = [
+      "Ups... ¡Cuidado! 😬",
+      "¡Ojo! Eso no le ha gustado...",
+      "Vigila tus decisiones 🤔",
+      "¡No te descuides tanto! 😅",
+      "¡Ay! Eso no era lo mejor..."
+    ];
+    if (Math.random() < 0.42) msg += "<br><i>" + frases[randomInt(0, frases.length - 1)] + "</i>";
+  }
   eventLog.push({ msg, type, t: Date.now() });
   if (eventLog.length > 100) eventLog.shift();
   renderLog();
 }
 
-// Nuevo renderLog visual avanzado
-function renderLog() {
-  let eventLogDiv = document.getElementById('event-log');
-  if (!eventLogDiv) {
-    eventLogDiv = document.createElement('div');
-    eventLogDiv.id = 'event-log';
-    eventLogDiv.style = `
-      position:fixed;
-      right:24px;
-      bottom:180px;
-      width:340px;
-      max-height:65vh;
-      min-height:54px;
-      z-index:200;
-      display:flex;
-      flex-direction:column-reverse;
-      overflow-y:auto;
-      padding:0;
-      pointer-events:auto;
-      align-items:flex-end;
-      background:transparent;
-    `;
-    eventLogDiv.tabIndex = 0;
-    document.body.appendChild(eventLogDiv);
-
-    // Scroll con rueda del ratón
-    eventLogDiv.addEventListener('wheel', (e) => {
-      if (e.deltaY < 0) eventLogScroll = Math.min(eventLogScroll + 1, eventLog.length - 1);
-      else eventLogScroll = Math.max(eventLogScroll - 1, 0);
-      renderLog();
-      e.preventDefault();
-    }, { passive: false });
-  }
-
-  // Mostrar 12 mensajes como máximo (puedes ajustar)
-  let visibleCount = 12;
-  let logsToShow = eventLog.slice(-visibleCount - eventLogScroll, eventLog.length - eventLogScroll);
-
-  eventLogDiv.innerHTML = logsToShow.map((e, idx) => {
-    let alpha;
-    if (idx === logsToShow.length - 1) { // último (más nuevo)
-      alpha = 1;
-    } else {
-      // transparencia progresiva para los anteriores, pero mínimo 0.18
-      alpha = Math.max(1 - 0.11 * (logsToShow.length - 1 - idx), 0.18);
-    }
-    return `<div class="log-msg ${e.type || ''}" style="
-      margin-bottom:2.5px;
-      padding:8px 16px;
-      border-radius:9px;
-      font-size:1.17em;
-      background:rgba(26,32,34,${alpha});
-      color:rgba(255,255,255,${alpha + 0.13});
-      box-shadow:0 2px 14px #0004;
-      font-weight:${idx === logsToShow.length - 1 ? 'bold' : 'normal'};
-      filter:blur(${idx === logsToShow.length - 1 ? '0px' : '0.1px'});
-      transition:background 0.25s, color 0.3s, opacity 0.2s;
-      opacity:1;
-      ">
-      ${e.msg}
-    </div>`;
-  }).join('');
-}
-
-// === PANEL DE CRIATURA CON BARRAS ===
+// === BARRAS DE ESTADO — SIEMPRE FUNCIONALES ===
 function renderCriaturasPanel() {
   const criaturasPanel = document.getElementById('criaturasPanel');
   if (!criaturasPanel) return;
@@ -462,12 +421,15 @@ function renderCriaturasPanel() {
   `;
   criaturasPanel.appendChild(div);
 }
+
 function renderStatBar(name, val, color) {
-  return `<div class="stat-bar" title="${name}" style="margin-bottom:2px;">
-    <span class="stat-fill" style="display:inline-block;height:13px;width:${clamp(val,0,100)}%;background:${color};border-radius:6px;"></span>
-    <span class="stat-text" style="margin-left:6px;vertical-align:middle;">${name}: ${Math.round(val)}</span>
+  // Aseguramos la estructura y el color
+  return `<div class="stat-bar" title="${name}" style="position:relative; height:18px; background:#3335; border-radius:7px; margin:4px 0 3px 0;">
+    <span class="stat-fill" style="position:absolute; left:0; top:0; height:18px; border-radius:7px; background:${color}; width:${clamp(val,0,100)}%;"></span>
+    <span class="stat-text" style="position:absolute; left:10px; top:0; font-size:13px; color:#fff;">${name}: ${Math.round(val)}</span>
   </div>`;
 }
+
 function renderStatOverlay() {
   let overlay = document.getElementById('stat-overlay');
   if (!overlay) {
