@@ -56,19 +56,20 @@
     "gimnasio": { "saludFisica": 18, "saludMental": 13, "energia": -20, "ansiedad": -16 },
     "cama": { "energia": 100 },
     "cris-visita": { "ansiedad": -100, "saludMental": 38 },
-    "cris-llamada": { "ansiedad": -90, "saludMental": 10, "felicidad": 10 },
+    "cris-llamada": { "ansiedad": -20, "saludMental": 10, "felicidad": 10 },
     "musica": { "felicidad": 4, "ansiedad": -6, "saludMental": 4 }
   },
   "modificadoresZona": {
     "calle": { "saludMental": -0.19, "ansiedad": 0.18 },
     "trabajo": { "energia": -0.09, "saludMental": -0.04, "ansiedad": -0.15 },
     "parque": { "felicidad": 0.11, "ansiedad": -0.14 }
+    "casa": { "felicidad": -0.11, "saludFisica": 18, "ansiedad": -0.14 }
   },
   "modificadoresGlobales": {
     "hambre": 0.12,
     "energia": -0.16,
-    "felicidad": -0.04,
-    "saludFisica": -1,
+    "felicidad": -0.24,
+    "saludFisica": -1
   },
   "psicologoMinDias": 20,
   "trabajoDias": [1, 2, 3, 4, 5],
