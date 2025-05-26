@@ -427,6 +427,8 @@ function renderLog() {
     </div>`;
   }).join('');
 }
+
+// === PANEL DE CRIATURA CON BARRAS ===
 function renderCriaturasPanel() {
   const criaturasPanel = document.getElementById('criaturasPanel');
   if (!criaturasPanel) return;
@@ -439,16 +441,22 @@ function renderCriaturasPanel() {
     <b>${c.nombre} (${c.personalidad})</b>
     <span style="float:right;font-size:1.5em">${getEstadoEmoji(c)}</span>
     <pre class="ascii"></pre>
-    ${Object.entries(c.stats).map(([k, v]) => renderStatBar(k[0].toUpperCase() + k.slice(1), v, '#5b8c37')).join('')}
+    ${renderStatBar('Hambre', c.stats.hambre, '#b3b703')}
+    ${renderStatBar('Felicidad', c.stats.felicidad, '#f2c53d')}
+    ${renderStatBar('Energía', c.stats.energia, '#19d5e4')}
+    ${renderStatBar('Confianza', c.stats.confianza, '#b39ddb')}
+    ${renderStatBar('Vínculo', c.vinculo, '#ec6')}
+    ${renderStatBar('Salud Mental', c.stats.saludMental, '#21e27b')}
+    ${renderStatBar('Salud Física', c.stats.saludFisica, '#f58f3b')}
     ${renderStatBar('Ansiedad', c.ansiedad || 0, '#e56')}
     <div>Turno: ${turno}</div>
   `;
   criaturasPanel.appendChild(div);
 }
 function renderStatBar(name, val, color) {
-  return `<div class="stat-bar" title="${name}">
-    <span class="stat-fill" style="width:${val}%;background:${color}"></span>
-    <span class="stat-text">${name}: ${Math.round(val)}</span>
+  return `<div class="stat-bar" title="${name}" style="margin-bottom:2px;">
+    <span class="stat-fill" style="display:inline-block;height:13px;width:${clamp(val,0,100)}%;background:${color};border-radius:6px;"></span>
+    <span class="stat-text" style="margin-left:6px;vertical-align:middle;">${name}: ${Math.round(val)}</span>
   </div>`;
 }
 function renderStatOverlay() {
