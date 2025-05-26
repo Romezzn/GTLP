@@ -99,8 +99,6 @@
   "zoomMin": 0.5,
   "zoomMax": 2.2,
   "zoomStep": 0.18,
-  "canvasOffsetX": 350,
-  "canvasOffsetY": 90,
   "felicidadAnsiedadUmbral": 50,
   "felicidadAnsiedadDecaimiento": 12,
   "accionRebajaAnsiedad": { "min": 3, "max": 6 },
