@@ -56,7 +56,7 @@
     "gimnasio": { "saludFisica": 18, "saludMental": 13, "energia": -20, "ansiedad": -16 },
     "cama": { "energia": 100 },
     "cris-visita": { "ansiedad": -30, "saludMental": 18 },
-    "cris-llamada": { "ansiedad": -9, "saludMental": 10, "felicidad": 10 },
+    "cris-llamada": { "ansiedad": -90, "saludMental": 10, "felicidad": 10 },
     "musica": { "felicidad": 4, "ansiedad": -6, "saludMental": 4 }
   },
   "modificadoresZona": {
