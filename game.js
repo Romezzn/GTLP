@@ -563,9 +563,19 @@ function renderEntorno() {
   ctx.restore();
 }
 function isoToScreen(x, y) {
+  // Centra el mapa en el canvas
+  const centerX = (canvas.width) / 2;
+  const centerY = (canvas.height) / 2;
+  // Calcula el tamaño del mapa en píxeles
+  const mapPixelWidth = CONFIG.gridWidth * tileWidth / 2 + CONFIG.gridHeight * tileWidth / 2;
+  const mapPixelHeight = CONFIG.gridWidth * tileHeight / 2 + CONFIG.gridHeight * tileHeight / 2;
+  // Offset para centrar el mapa
+  const offsetX = centerX - mapPixelWidth / 2;
+  const offsetY = centerY - mapPixelHeight / 2;
+
   return {
-    x: (x - y) * tileWidth / 2 + CONFIG.canvasOffsetX,
-    y: (x + y) * tileHeight / 2 + CONFIG.canvasOffsetY
+    x: (x - y) * tileWidth / 2 + offsetX,
+    y: (x + y) * tileHeight / 2 + offsetY
   };
 }
 
