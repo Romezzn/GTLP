@@ -16,7 +16,7 @@
     { "id": "arbol", "name": "Árbol", "icon": "🌳", "zona": "parque", "pos": { "x": 3, "y": 4 } },
     { "id": "medikit", "name": "Botiquín", "icon": "💊", "zona": "hospital", "pos": { "x": 20, "y": 3 } },
     { "id": "psicologo", "name": "Psicólogo", "icon": "🧑‍⚕️", "zona": "hospital", "pos": { "x": 18, "y": 2 } },
-    { "id": "banera", "name": "Bañera", "icon": "🛁", "zona": "casa", "pos": { "x": 3, "y": 13 } },
+    { "id": "banera", "name": "Bañera", "icon": "🛁", "zona": "casa", "pos": { "x": 2, "y": 14 } },
     { "id": "comida-casa", "name": "Comida", "icon": "🍲", "zona": "casa", "pos": { "x": 5, "y": 12 } },
     { "id": "chocolate", "name": "Chocolate", "icon": "🍫", "zona": "restaurante", "pos": { "x": 9, "y": 2 } },
     { "id": "libro", "name": "Libro", "icon": "📖", "zona": "casa", "pos": { "x": 4, "y": 11 } },
