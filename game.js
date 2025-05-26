@@ -123,6 +123,25 @@ function escucharMusica() {
   actualizarUI();
 }
 
+// === EMOJI SEGÚN ESTADO DE ÁNIMO ===
+function getEstadoEmoji(criatura) {
+  const f = criatura.stats.felicidad;
+  const a = criatura.ansiedad;
+  const m = criatura.stats.saludMental;
+
+  if (criatura.estadoEmocional === 'enCrisis' || (a > 85 && m < 40)) return "🥵";
+  if (m < 30 && a > 70) return "😱";
+  if (a > 80) return "😰";
+  if (a > 60) return "😟";
+  if (f >= 70 && a < 30 && m > 60) return "😁";
+  if (f >= 70 && m > 50) return "😊";
+  if (f < 30 && m < 40) return "😢";
+  if (f < 30) return "😞";
+  if (m < 40) return "🥲";
+  if (a > 50) return "😬";
+  return "🙂";
+}
+
 // === CLASE CRIATURA ===
 class Criatura {
   constructor(data) {
@@ -364,7 +383,7 @@ function renderCriaturasPanel() {
   div.tabIndex = 0;
   div.innerHTML = `
     <b>${c.nombre} (${c.personalidad})</b>
-    <span style="float:right;font-size:1.5em">😊</span>
+    <span style="float:right;font-size:1.5em">${getEstadoEmoji(c)}</span>
     <pre class="ascii"></pre>
     ${Object.entries(c.stats).map(([k, v]) => renderStatBar(k[0].toUpperCase() + k.slice(1), v, '#5b8c37')).join('')}
     ${renderStatBar('Ansiedad', c.ansiedad || 0, '#e56')}
@@ -397,7 +416,7 @@ function renderStatOverlay() {
     <div style="display:flex;align-items:center;justify-content:center;gap:2.2em;">
       <b>${c.nombre}</b>
       <span>😋${Math.round(c.stats.hambre)}</span>
-      <span>😊${Math.round(c.stats.felicidad)}</span>
+      <span>${getEstadoEmoji(c)}${Math.round(c.stats.felicidad)}</span>
       <span>⚡${Math.round(c.stats.energia)}</span>
       <span>🤝${Math.round(c.vinculo)}</span>
       <span>🧠${Math.round(c.stats.saludMental)}</span>
@@ -509,7 +528,7 @@ function renderEntorno() {
   ctx.textAlign = "center";
   ctx.fillText(c.nombre || "??", sx + tileWidth / 2, sy + tileHeight / 2 - 26);
   ctx.font = "28px serif";
-  ctx.fillText("😊", sx + tileWidth / 2, sy + tileHeight / 2 + 8);
+  ctx.fillText(getEstadoEmoji(c), sx + tileWidth / 2, sy + tileHeight / 2 + 8);
   ctx.restore();
   ctx.restore();
 }
