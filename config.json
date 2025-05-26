@@ -68,6 +68,7 @@
     "hambre": 0.14,
     "energia": -0.16,
     "felicidad": -0.04,
+    "saludFisica": -0.18,
     "ansiedad": 0.18
   },
   "psicologoMinDias": 20,
