@@ -107,7 +107,7 @@
   "cris": {
     "nombre": "Cris",
     "emoji": "😄",
-    "aparicionMin": ,
+    "aparicionMin": 10,
     "duracionVisitaDias": 1
   },
   "zoomMin": 0.7,
