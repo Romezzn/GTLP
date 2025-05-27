@@ -2,277 +2,213 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Tamagotchi TLP</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tamagotchi TLP - Móvil</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <style>
-    :root {
-      --color-bg: #23242a;
-      --color-panel: #23263cbb;
-      --color-card: #23263c;
-      --color-tile: #32343d;
-      --color-glow: #4b8cff;
-      --radius: 18px;
-    }
-    html, body {
-      height: 100%;
-      margin: 0;
-      padding: 0;
-      background: var(--color-bg);
-      font-family: 'Nunito', 'Segoe UI', 'Arial', sans-serif;
-      color: #f3f4fa;
-    }
-    body {
-      min-height: 100vh;
+    body, html {
+      margin: 0; padding: 0;
+      width: 100vw; height: 100vh;
+      background: #21232b;
+      font-family: 'Nunito', 'Segoe UI', Arial, sans-serif;
+      color: #fff;
       overflow: hidden;
+      user-select: none;
     }
-    #main {
-      display: flex;
-      flex-direction: row;
-      align-items: stretch;
-      justify-content: center;
+    #app-root {
       height: 100vh;
       width: 100vw;
-      box-sizing: border-box;
-      background: linear-gradient(120deg, #292c3b 0%, #313d51 100%);
-    }
-    #canvas-container {
-      flex: 1 1 auto;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 0;
-      min-height: 0;
-      overflow: hidden;
-      background: var(--color-tile);
-      border-radius: var(--radius);
-      margin: 16px 0 16px 16px;
-      box-shadow: 0 4px 28px #0007;
-    }
-    #canvas {
-      display: block;
-      background: transparent;
-      border-radius: var(--radius);
-      outline: none;
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      box-shadow: 0 2px 18px #0008;
-      max-width: 98vw;
-      max-height: 93vh;
-      image-rendering: pixelated;
-      transition: box-shadow .15s;
-    }
-    #sidepanel {
-      min-width: 340px;
-      max-width: 440px;
-      width: 370px;
-      background: var(--color-panel);
-      border-radius: var(--radius);
-      margin: 18px 18px 18px 0;
-      padding: 24px 24px 20px 24px;
-      box-shadow: 0 2px 24px #0006;
       display: flex;
       flex-direction: column;
-      justify-content: flex-start;
-      font-size: 1.06em;
-      position: relative;
+      background: linear-gradient(120deg, #25273b 0%, #282d41 100%);
     }
-    #sidepanel h1 {
-      font-family: 'Nunito', 'Segoe UI', 'Arial', sans-serif;
-      margin: 0 0 12px 0;
-      color: #7fd1fa;
-      font-size: 2em;
-      letter-spacing: 1.5px;
-      text-shadow: 0 2px 12px #01262a3c;
+    .header {
+      flex: 0 0 auto;
+      padding: 14px 0 6px 0;
+      background: #253355;
+      text-align: center;
+      font-size: 1.35em;
       font-weight: 800;
+      letter-spacing: .02em;
+      box-shadow: 0 2px 14px #0007;
     }
-    #sidepanel .subtitle {
-      color: #d1beff;
-      margin-bottom: 18px;
-      font-size: 1.11em;
-      letter-spacing: 0.1em;
-      font-weight: 600;
-      text-shadow: 0 1px 6px #3336;
-    }
-    #sidepanel .panel-section {
-      margin-bottom: 1.25em;
-    }
-    .criatura {
-      background: var(--color-card);
-      border-radius: 13px;
-      margin-bottom: 12px;
-      padding: 14px 18px 14px 16px;
-      border: 2px solid #3765ba33;
-      box-shadow: 0 2px 15px #0003;
-      position: relative;
-      transition: box-shadow .12s, border-color .15s;
-      font-size: 1em;
-    }
-    .criatura.selected {
-      border: 2px solid var(--color-glow);
-      box-shadow: 0 0 0 1.5px var(--color-glow),0 2px 15px #000a;
-      background: #27365daa;
-    }
-    .stat-bar {
-      margin-bottom: 0.5em;
-    }
-    .stat-bar .stat-text {
-      font-size: 13px;
-      font-weight: 600;
-    }
-    #event-log {
-      position: fixed;
-      top: 18px;
-      right: 32px;
-      width: 360px;
-      max-height: 32vh;
-      min-height: 54px;
-      z-index: 200;
+    .main-content {
+      flex: 1 1 auto;
       display: flex;
-      flex-direction: column-reverse;
-      overflow-y: auto;
-      padding: 0;
-      align-items: flex-end;
+      flex-direction: row;
+      overflow: hidden;
+      min-height: 0;
+    }
+    .stats-bar {
+      flex: 0 0 58px;
+      background: #232949f2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 13px;
+      padding: 12px 2px 6px 2px;
+      border-radius: 0 20px 20px 0;
+      box-shadow: 2px 0 18px #0005;
+      height: 100%;
+      z-index: 2;
+    }
+    .stat-icon-block {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-size: 1.10em;
+      color: #fff;
+      margin-bottom: 2px;
+      min-width: 32px;
+    }
+    .stat-icon-block .em { font-size: 1.3em; }
+    .stat-icon-block .val { font-size: .96em; font-weight: bold; }
+    .stat-icon-block .lbl { font-size: .75em; color: #8fe; margin-top: -3px;}
+    .game-area {
+      flex: 1 1 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      min-width: 0;
+    }
+    #canvas {
+      width: 100%;
+      height: 38vw;
+      min-height: 120px;
+      max-height: 44vh;
       background: transparent;
+      display: block;
+      border-radius: 17px;
+      margin: 8px 0 0 0;
+      box-shadow: 0 2px 18px #0007;
+    }
+    .creature-panel {
+      background: #23314bdb;
+      margin: 12px 10px 7px 10px;
+      border-radius: 12px;
+      padding: 7px 14px;
+      font-size: 1.07em;
+      box-shadow: 0 2px 12px #0006;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .creature-panel .emoji { font-size: 2em; margin-right: 10px;}
+    .turn-box {
+      font-size: .95em; color: #bdf; font-weight: bold; margin: 4px 0 0 0;
+    }
+    .objects-panel {
+      margin: 10px 6vw 0 6vw;
+      border-radius: 15px;
+      background: #222a3bd8;
+      box-shadow: 0 2px 13px #0007;
+      padding: 10px 0 10px 0;
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+    }
+    .object-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: #2a3c6d;
+      color: #fff;
+      border: none;
+      border-radius: 11px;
       font-size: 1.1em;
-      pointer-events: none;
+      padding: 12px 10px;
+      font-weight: bold;
+      width: 62px;
+      box-shadow: 0 2px 10px #0005;
+      cursor: pointer;
+      transition: transform .14s, background .17s;
+    }
+    .object-btn:active { background: #485a91; transform: scale(.97);}
+    .object-btn[disabled] {
+      background: #444a5e;
+      color: #aaa;
+      opacity: 0.6;
+      cursor: default;
+    }
+    .object-btn .icon { font-size: 2em; }
+    .object-btn .lbl { font-size: .90em; }
+    .footer-bar {
+      flex: 0 0 auto;
+      background: #20253b;
+      display: flex;
+      flex-direction: row;
+      justify-content: space-around;
+      align-items: stretch;
+      padding: 0 0 0 0;
+      height: 51px;
+      border-top: 1.5px solid #334;
+      z-index: 3;
+    }
+    .footer-btn {
+      flex: 1 1 33%;
+      border: none;
+      background: none;
+      color: #fff;
+      font-size: 1.47em;
+      padding: 0;
+      cursor: pointer;
+      transition: background .13s;
+      font-weight: 700;
+      letter-spacing: .03em;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+    }
+    .footer-btn.selected, .footer-btn:active {
+      background: #2d3d69;
+      color: #74e4f7;
+    }
+    .log-panel {
+      margin: 10px 14px 10px 14px;
+      background: #232b3eeb;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px #0006;
+      font-size: 1.09em;
+      padding: 11px 14px;
+      max-height: 18vh;
+      overflow-y: auto;
     }
     .log-msg.good { color: #8bffad; }
     .log-msg.warn { color: #ffd176; }
     .log-msg.emo { color: #9ad2ff; }
-    .log-msg { margin-bottom: 3px; }
-    #stat-overlay {
-      position: fixed;
-      top: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #22262cfa;
-      color: #fff;
-      font-size: 1.2em;
-      border-radius: 14px;
-      padding: 9px 48px 10px 48px;
-      z-index: 40;
-      box-shadow: 0 0 18px #0007;
-      pointer-events: none;
-      min-width: 360px;
-      text-align: center;
-      font-weight: 600;
-      letter-spacing: 0.04em;
-      border: 1.5px solid #7fd1fa44;
-    }
-    .zoom-ui {
-      position: fixed;
-      top: 62px;
-      right: 17px;
-      z-index: 99;
-      background: #233d55ee;
-      border-radius: 11px;
-      padding: 8px 15px;
-      box-shadow: 0 2px 10px #0007;
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      backdrop-filter: blur(2px);
-    }
-    .zoom-ui button {
-      font-size: 1.35em;
-      border-radius: 5px;
-      margin: 4px;
-      padding: 2px 10px;
-      background: #263d5e;
-      color: #fff;
-      border: 1px solid #5396e0;
-      cursor: pointer;
-      transition: background .13s, color .13s;
-    }
-    .zoom-ui button:hover {
-      background: #5396e0;
-      color: #fff;
-    }
-    .floating-btn {
-      position: fixed;
-      right: 24px;
-      background: #2a2e4c;
-      color: #fff;
-      border: none;
-      border-radius: 13px;
-      font-size: 1.23em;
-      padding: 15px 24px;
-      z-index: 99;
-      box-shadow: 0 3px 14px #0006;
-      cursor: pointer;
-      transition: background .15s, box-shadow .15s;
-      font-weight: 700;
-    }
-    #btn-cris { bottom: 24px; background: #3f3c6b; }
-    #btn-cris:hover { background: #5162e6; }
-    #btn-musica { bottom: 90px; background: #2196f3; }
-    #btn-musica:hover { background: #5bb0f8; }
-    @media (max-width: 950px) {
-      #sidepanel { min-width: 100vw; max-width: 100vw; width: 100vw; margin: 0; border-radius: 0; }
-      #main { flex-direction: column; }
-      #canvas-container { margin: 0 0 20px 0; border-radius: 0; }
-    }
-    @media (max-width: 600px) {
-      #sidepanel { padding: 14px 6vw 14px 6vw; }
-      #canvas { max-width: 98vw; max-height: 46vh; }
-      #event-log { width: 98vw; right: 0; }
-      #stat-overlay { min-width: 95vw; }
-    }
-    button { font-family: inherit; }
+    .log-msg { margin-bottom: 3.5px; }
+    /* Scrollbar minimal */
+    ::-webkit-scrollbar { width: 7px; background: #222940;}
+    ::-webkit-scrollbar-thumb { background: #3b4560; border-radius: 7px;}
   </style>
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;900&display=swap" rel="stylesheet">
 </head>
 <body>
-  <div id="main">
-    <div id="canvas-container">
-      <canvas id="canvas" tabindex="0"></canvas>
+  <div id="app-root">
+    <div class="header">Tamagotchi TLP</div>
+    <div class="main-content">
+      <div class="stats-bar" id="mobile-stats"></div>
+      <div class="game-area">
+        <canvas id="canvas" tabindex="0"></canvas>
+        <div class="creature-panel" id="creature-info"></div>
+        <div class="objects-panel" id="mobile-objects"></div>
+        <div class="log-panel" id="mobile-log" style="display: none;"></div>
+      </div>
     </div>
-    <div id="sidepanel">
-      <h1>Tamagotchi TLP</h1>
-      <div class="subtitle">Cuidando mente y emociones</div>
-      <div id="criaturasPanel" class="panel-section"></div>
-      <div id="main-controls" class="panel-section">
-        <b>Turno:</b> <span id="turnoNum">0</span>
-      </div>
-      <div class="panel-section" style="margin-top:10px; color:#b0f;">
-        <p style="margin:0;">
-          Interactúa y ayuda a tu criatura.<br>
-          Si no juegas en <b>10s</b>, perderá confianza y vínculo.<br>
-          Cada minuto avanza un turno.<br>
-          Explora el mapa, usa objetos y busca sorpresas.
-        </p>
-      </div>
-      <div style="margin-top:14px; font-size:0.92em; color:#6fe;">
-        <p style="margin:0;">
-          <b>Consejo:</b> Pulsa y arrastra el mapa para moverlo. Usa el zoom para ver más detalles.
-        </p>
-      </div>
+    <div class="footer-bar">
+      <button class="footer-btn selected" id="tab-game"><span>🏞️</span><span style="font-size:.53em;margin-top:-7px;">Mapa</span></button>
+      <button class="footer-btn" id="tab-objects"><span>🎒</span><span style="font-size:.53em;margin-top:-7px;">Objetos</span></button>
+      <button class="footer-btn" id="tab-log"><span>📖</span><span style="font-size:.53em;margin-top:-7px;">Log</span></button>
     </div>
   </div>
   <audio id="moveSfx" src="move.wav"></audio>
   <audio id="okSfx" src="ok.wav"></audio>
   <audio id="errSfx" src="err.wav"></audio>
-  <script>
-    function resizeCanvas() {
-      const canvas = document.getElementById('canvas');
-      const dpr = window.devicePixelRatio || 1;
-      const container = document.getElementById('canvas-container');
-      let w = container.offsetWidth;
-      let h = container.offsetHeight;
-      if (!h) h = window.innerHeight;
-      if (!w) w = window.innerWidth;
-      const aspect = 24 / 16;
-      let cw = Math.min(w, h * aspect);
-      let ch = Math.min(h, w / aspect);
-      canvas.width = Math.round(cw * dpr);
-      canvas.height = Math.round(ch * dpr);
-      canvas.style.width = cw + 'px';
-      canvas.style.height = ch + 'px';
-    }
-    window.addEventListener('resize', resizeCanvas);
-    window.addEventListener('DOMContentLoaded', resizeCanvas);
-  </script>
   <script src="game.js"></script>
+  <script src="mobile-ui.js"></script>
 </body>
 </html>
