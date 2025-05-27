@@ -64,8 +64,8 @@
     }
     #sidepanel {
       min-width: 340px;
-      max-width: 420px;
-      width: 360px;
+      max-width: 440px;
+      width: 370px;
       background: var(--color-panel);
       border-radius: var(--radius);
       margin: 18px 18px 18px 0;
@@ -113,15 +113,12 @@
       box-shadow: 0 0 0 1.5px var(--color-glow),0 2px 15px #000a;
       background: #27365daa;
     }
-    .stat-bar, .stat-bar-vert {
-      margin-bottom: 0.4em;
+    .stat-bar {
+      margin-bottom: 0.5em;
     }
     .stat-bar .stat-text {
       font-size: 13px;
       font-weight: 600;
-    }
-    .stat-bar-vert {
-      margin: 0 4px 0 0;
     }
     #event-log {
       position: fixed;
@@ -163,7 +160,6 @@
       letter-spacing: 0.04em;
       border: 1.5px solid #7fd1fa44;
     }
-    /* Zoom buttons */
     .zoom-ui {
       position: fixed;
       top: 62px;
@@ -193,7 +189,6 @@
       background: #5396e0;
       color: #fff;
     }
-    /* Floating buttons */
     .floating-btn {
       position: fixed;
       right: 24px;
@@ -213,103 +208,16 @@
     #btn-cris:hover { background: #5162e6; }
     #btn-musica { bottom: 90px; background: #2196f3; }
     #btn-musica:hover { background: #5bb0f8; }
-    /* --- MOVIL: barra lateral de stats y menú de objetos --- */
-    @media (max-width: 800px) {
+    @media (max-width: 950px) {
+      #sidepanel { min-width: 100vw; max-width: 100vw; width: 100vw; margin: 0; border-radius: 0; }
       #main { flex-direction: column; }
-      #sidepanel, #stat-overlay {
-        display: none !important;
-      }
-      #canvas-container {
-        margin: 0 !important;
-        border-radius: 0 !important;
-        box-shadow: none !important;
-        width: 100vw !important;
-        height: 100vh !important;
-        min-width: 100vw !important;
-        min-height: 100vh !important;
-      }
-      #canvas {
-        border-radius: 0 !important;
-        box-shadow: none !important;
-        max-width: 100vw !important;
-        max-height: 100vh !important;
-        width: 100vw !important;
-        height: 100vh !important;
-      }
-      #stat-vertical {
-        display: flex !important;
-        position: fixed;
-        top: 0; left: 0;
-        height: 100vh;
-        width: 52px;
-        flex-direction: column;
-        align-items: center;
-        z-index: 110;
-        background: rgba(30,34,48,0.94);
-        border-radius: 0 18px 18px 0;
-        box-shadow: 0 0 14px #2229;
-        padding: 7px 2px 12px 2px;
-        gap: 9px;
-      }
-      .stat-mini {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        font-size: 0.81em;
-        color: #fff;
-        margin-bottom: 1.1em;
-      }
-      .stat-mini .em { font-size: 1.23em; }
-      .stat-mini .val { font-size: 0.95em; margin-top: -2px; }
-      .stat-mini .lbl { font-size: 0.82em; color: #8fe; margin-top: -2px; }
-      #mobile-obj-btn {
-        display: flex;
-        position: fixed;
-        right: 16px; bottom: 16px;
-        z-index: 220;
-        background: #1e3055;
-        border-radius: 50%;
-        box-shadow: 0 2px 12px #0007;
-        width: 54px; height: 54px;
-        align-items: center; justify-content: center;
-        font-size: 2em; color: #fff;
-        border: 2px solid #6cf;
-        cursor: pointer;
-      }
-      #mobile-obj-panel {
-        display: none;
-        position: fixed;
-        left: 0; top: 0; right: 0; bottom: 0;
-        z-index: 500;
-        background: rgba(10,16,30,0.97);
-        align-items: center;
-        justify-content: center;
-        flex-direction: column;
-        gap: 22px;
-      }
-      #mobile-obj-panel.active {
-        display: flex;
-      }
-      .objeto-boton-mobile {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        font-size: 1.2em;
-        background: #263d5e;
-        color: #fff;
-        border-radius: 12px;
-        border: none;
-        padding: 13px 20px;
-        box-shadow: 0 2px 11px #0007;
-        font-weight: bold;
-        margin-bottom: 8px;
-        cursor: pointer;
-      }
+      #canvas-container { margin: 0 0 20px 0; border-radius: 0; }
     }
-    @media (min-width: 801px) {
-      #stat-vertical, #mobile-obj-btn, #mobile-obj-panel {
-        display: none !important;
-      }
+    @media (max-width: 600px) {
+      #sidepanel { padding: 14px 6vw 14px 6vw; }
+      #canvas { max-width: 98vw; max-height: 46vh; }
+      #event-log { width: 98vw; right: 0; }
+      #stat-overlay { min-width: 95vw; }
     }
     button { font-family: inherit; }
   </style>
@@ -319,12 +227,6 @@
   <div id="main">
     <div id="canvas-container">
       <canvas id="canvas" tabindex="0"></canvas>
-      <!-- Barra de stats vertical en móvil -->
-      <div id="stat-vertical"></div>
-      <!-- Botón menú objetos móvil -->
-      <button id="mobile-obj-btn" title="Objetos" style="display:none;"><span>🎒</span></button>
-      <!-- Panel de objetos móvil -->
-      <div id="mobile-obj-panel"></div>
     </div>
     <div id="sidepanel">
       <h1>Tamagotchi TLP</h1>
@@ -348,27 +250,21 @@
       </div>
     </div>
   </div>
-  <!-- El log flotante lo crea game.js dinámicamente -->
   <audio id="moveSfx" src="move.wav"></audio>
   <audio id="okSfx" src="ok.wav"></audio>
   <audio id="errSfx" src="err.wav"></audio>
   <script>
     function resizeCanvas() {
-      // Tamaño máximo visible que no deforma el canvas
       const canvas = document.getElementById('canvas');
       const dpr = window.devicePixelRatio || 1;
-      // Calcula el tamaño real disponible
       const container = document.getElementById('canvas-container');
       let w = container.offsetWidth;
       let h = container.offsetHeight;
-      // Si estamos en móvil, el container puede tener height=0, usar window size
       if (!h) h = window.innerHeight;
       if (!w) w = window.innerWidth;
-      // Mantén aspecto
       const aspect = 24 / 16;
       let cw = Math.min(w, h * aspect);
       let ch = Math.min(h, w / aspect);
-      // Ajusta el tamaño físico (para evitar pixelado)
       canvas.width = Math.round(cw * dpr);
       canvas.height = Math.round(ch * dpr);
       canvas.style.width = cw + 'px';
@@ -378,86 +274,5 @@
     window.addEventListener('DOMContentLoaded', resizeCanvas);
   </script>
   <script src="game.js"></script>
-  <!-- UI móvil: stats barra vertical y menú objetos -->
-  <script>
-function renderStatVertical() {
-  const c = window.criaturas?.[0] || (window.CONFIG && window.CONFIG.personaje);
-  const el = document.getElementById('stat-vertical');
-  if (!el) return;
-  if (!c || !c.stats) {
-    el.innerHTML = '<div style="margin-top:2em;color:#fff;font-size:1.1em;">Cargando…</div>';
-    return;
-  }
-  el.innerHTML = [
-    { k:'hambre',     em:'😋', col:'#b3b703', lbl:'Ham', v:c.stats?.hambre || 0 },
-    { k:'felicidad',  em:'😊', col:'#f2c53d', lbl:'Feli', v:c.stats?.felicidad || 0 },
-    { k:'energia',    em:'⚡', col:'#19d5e4', lbl:'En', v:c.stats?.energia || 0 },
-    { k:'confianza',  em:'🤝', col:'#b39ddb', lbl:'Con', v:c.stats?.confianza || 0 },
-    { k:'vinculo',    em:'💞', col:'#ec6', lbl:'Vín', v:c.vinculo || 0 },
-    { k:'saludMental',em:'🧠', col:'#21e27b', lbl:'Ment', v:c.stats?.saludMental || 0 },
-    { k:'saludFisica',em:'💪', col:'#f58f3b', lbl:'Fís', v:c.stats?.saludFisica || 0 },
-    { k:'ansiedad',   em:'😰', col:'#e56', lbl:'Ans', v:c.ansiedad || 0 },
-    { k:'depresion',  em:'🥀', col:'#5a34a3', lbl:'Dep', v:c.stats?.depresion || 0 }
-  ].map(stat =>
-    `<div class="stat-mini" style="color:${stat.col}">
-      <span class="em">${stat.em}</span>
-      <span class="val">${Math.round(stat.v)}</span>
-      <span class="lbl">${stat.lbl}</span>
-    </div>`
-  ).join('');
-}
-
-function renderMobileObjetos() {
-  const panel = document.getElementById('mobile-obj-panel');
-  if (!panel) return;
-  panel.innerHTML = '<button onclick="document.getElementById(\'mobile-obj-panel\').classList.remove(\'active\')" style="position:absolute;top:24px;right:32px;font-size:2.2em;background:none;border:none;color:#fff;z-index:900;">✖️</button>';
-  if (!window.CONFIG || !window.criaturas) return;
-  const c = window.criaturas[0];
-  window.CONFIG.objetos.forEach(obj => {
-    let cooldown = c.cooldowns?.[obj.id] || 0;
-    let blocked = !window.puedeUsarObjeto ? false : !window.puedeUsarObjeto(c, obj);
-    let disabled = cooldown > 0 || blocked;
-    let btn = document.createElement('button');
-    btn.className = "objeto-boton-mobile";
-    btn.innerHTML = `<span style="font-size:1.5em">${obj.icon}</span> <span>${obj.name}</span>`;
-    btn.disabled = disabled;
-    btn.style.opacity = disabled ? 0.6 : 1;
-    btn.onclick = () => {
-      if (disabled) return;
-      document.getElementById('mobile-obj-panel').classList.remove('active');
-      if (window.usarObjeto) window.usarObjeto(c, obj, true);
-      setTimeout(() => {
-        renderStatVertical();
-        renderMobileObjetos();
-      }, 100);
-    };
-    panel.appendChild(btn);
-  });
-}
-
-function showMobileObjBtnIfNeeded() {
-  const btn = document.getElementById('mobile-obj-btn');
-  if (window.innerWidth <= 800) btn.style.display = 'flex';
-  else btn.style.display = 'none';
-}
-
-document.getElementById('mobile-obj-btn').onclick = () => {
-  document.getElementById('mobile-obj-panel').classList.add('active');
-  renderMobileObjetos();
-};
-
-window.renderStatVertical = renderStatVertical;
-window.renderMobileObjetos = renderMobileObjetos;
-window.addEventListener('resize', showMobileObjBtnIfNeeded);
-window.addEventListener('DOMContentLoaded', showMobileObjBtnIfNeeded);
-function tryMobileUIUpdate() {
-  if (window.innerWidth <= 800) {
-    renderStatVertical();
-    renderMobileObjetos();
-  }
-}
-window.addEventListener('resize', tryMobileUIUpdate);
-window.addEventListener('DOMContentLoaded', tryMobileUIUpdate);
-  </script>
 </body>
 </html>
