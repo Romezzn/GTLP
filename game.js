@@ -177,7 +177,7 @@ function getEstadoEmoji(c) {
   const f = c.stats.felicidad, a = c.ansiedad, m = c.stats.saludMental, d = c.stats.depresion;
   if (c.estadoEmocional === 'enCrisis' || (a > 85 && m < 40)) return "🥵";
   if (m < 30 && a > 70) return "😱";
-  if (d > 60) return "🥀";
+  if (d > 60) return "🫀";
   if (a > 80) return "😰";
   if (a > 60) return "😟";
   if (f >= 70 && a < 30 && m > 60) return "😁";
@@ -415,62 +415,8 @@ function usarObjeto(c, obj, mostrarMsg = true) {
   return true;
 }
 
-// --- LOGS Y PANEL VISUAL ---
-function logMsg(msg, type = "") {
-  eventLog.push({ msg, type, t: Date.now() });
-  if (eventLog.length > 100) eventLog.shift();
-  renderLog();
-}
-function renderLog() {
-  let eventLogDiv = document.getElementById('event-log');
-  if (!eventLogDiv) {
-    eventLogDiv = document.createElement('div');
-    eventLogDiv.id = 'event-log';
-    eventLogDiv.style = `
-      position:fixed;
-      right:24px;
-      bottom:180px;
-      width:340px;
-      max-height:65vh;
-      min-height:54px;
-      z-index:200;
-      display:flex;
-      flex-direction:column;
-      overflow-y:auto;
-      padding:0;
-      pointer-events:auto;
-      align-items:flex-end;
-      background:transparent;
-    `;
-    eventLogDiv.tabIndex = 0;
-    document.body.appendChild(eventLogDiv);
+let objetoEstado = {}; // { id: "idle"/"inprogress"/"done"/"cooldown"/"blocked" }
 
-    eventLogDiv.addEventListener('wheel', (e) => {
-      if (e.deltaY < 0) eventLogScroll = Math.min(eventLogScroll + 1, eventLog.length - 1);
-      else eventLogScroll = Math.max(eventLogScroll - 1, 0);
-      renderLog();
-      e.preventDefault();
-    }, { passive: false });
-  }
-  let visibleCount = 3;
-  let logsToShow = eventLog.slice(-visibleCount - eventLogScroll, eventLog.length - eventLogScroll);
-  eventLogDiv.innerHTML = logsToShow.map((e, idx) => {
-    let alpha;
-    if (idx === logsToShow.length - 1) alpha = 1;
-    else alpha = Math.max(1 - 0.11 * (logsToShow.length - 1 - idx), 0.18);
-    return `<div class="log-msg ${e.type || ''}" style="
-      margin-bottom:2.5px; padding:8px 16px; border-radius:9px;
-      font-size:1.17em; background:rgba(26,32,34,${alpha});
-      color:rgba(255,255,255,${alpha + 0.13});
-      box-shadow:0 2px 14px #0004; font-weight:${idx === logsToShow.length - 1 ? 'bold' : 'normal'};
-      filter:blur(${idx === logsToShow.length - 1 ? '0px' : '0.1px'});
-      transition:background 0.25s, color 0.3s, opacity 0.2s; opacity:1;">
-      ${e.msg}
-    </div>`;
-  }).join('');
-}
-
-// --- PANEL DE CRIATURA CON BARRAS Y OBJETOS INTERACTIVOS ---
 function renderCriaturasPanel() {
   const criaturasPanel = document.getElementById('criaturasPanel');
   if (!criaturasPanel) return;
@@ -498,8 +444,6 @@ function renderCriaturasPanel() {
   renderObjetosInteractivos();
 }
 
-let objetoEstado = {}; // { id: "idle"/"inprogress"/"done"/"cooldown"/"blocked" }
-
 function renderObjetosInteractivos() {
   let panel = document.getElementById('objetosPanel');
   if (!panel) {
@@ -522,7 +466,6 @@ function renderObjetosInteractivos() {
     } else if (objetoEstado[obj.id] === "done") {
       estado = "done";
     } else {
-      // ¿Se puede usar?
       if (!puedeUsarObjeto(c, obj)) {
         estado = "blocked";
       }
@@ -740,6 +683,61 @@ function tickJuego() {
   setTimeout(tickJuego, CONFIG.gameTick);
 }
 
+// --- LOGS Y PANEL VISUAL ---
+function logMsg(msg, type = "") {
+  eventLog.push({ msg, type, t: Date.now() });
+  if (eventLog.length > 100) eventLog.shift();
+  renderLog();
+}
+function renderLog() {
+  let eventLogDiv = document.getElementById('event-log');
+  if (!eventLogDiv) {
+    eventLogDiv = document.createElement('div');
+    eventLogDiv.id = 'event-log';
+    eventLogDiv.style = `
+      position:fixed;
+      right:24px;
+      bottom:180px;
+      width:340px;
+      max-height:65vh;
+      min-height:54px;
+      z-index:200;
+      display:flex;
+      flex-direction:column;
+      overflow-y:auto;
+      padding:0;
+      pointer-events:auto;
+      align-items:flex-end;
+      background:transparent;
+    `;
+    eventLogDiv.tabIndex = 0;
+    document.body.appendChild(eventLogDiv);
+
+    eventLogDiv.addEventListener('wheel', (e) => {
+      if (e.deltaY < 0) eventLogScroll = Math.min(eventLogScroll + 1, eventLog.length - 1);
+      else eventLogScroll = Math.max(eventLogScroll - 1, 0);
+      renderLog();
+      e.preventDefault();
+    }, { passive: false });
+  }
+  let visibleCount = 3;
+  let logsToShow = eventLog.slice(-visibleCount - eventLogScroll, eventLog.length - eventLogScroll);
+  eventLogDiv.innerHTML = logsToShow.map((e, idx) => {
+    let alpha;
+    if (idx === logsToShow.length - 1) alpha = 1;
+    else alpha = Math.max(1 - 0.11 * (logsToShow.length - 1 - idx), 0.18);
+    return `<div class="log-msg ${e.type || ''}" style="
+      margin-bottom:2.5px; padding:8px 16px; border-radius:9px;
+      font-size:1.17em; background:rgba(26,32,34,${alpha});
+      color:rgba(255,255,255,${alpha + 0.13});
+      box-shadow:0 2px 14px #0004; font-weight:${idx === logsToShow.length - 1 ? 'bold' : 'normal'};
+      filter:blur(${idx === logsToShow.length - 1 ? '0px' : '0.1px'});
+      transition:background 0.25s, color 0.3s, opacity 0.2s; opacity:1;">
+      ${e.msg}
+    </div>`;
+  }).join('');
+}
+
 // --- ESTILO Y UI ---
 function renderStatBar(name, val, color) {
   const isMobile = window.matchMedia("(max-width: 900px)").matches;
@@ -749,7 +747,7 @@ function renderStatBar(name, val, color) {
       <span class="stat-text" style="position:absolute; left:10px; top:0; font-size:13px; color:#fff;">${name}: ${Math.round(val)}</span>
     </div>`;
   } else {
-    return `<div class="stat-bar-vert" title="${name}" style="position:relative; width:28px; height:90px; background:#3335; border-radius:9px; margin:5px 5px 5px 5px; display:flex; flex-direction:colu[...]
+    return `<div class="stat-bar-vert" title="${name}" style="position:relative; width:28px; height:90px; background:#3335; border-radius:9px; margin:5px 5px 5px 5px; display:flex; flex-direction:column; align-items:center;">
       <span class="stat-fill-vert" style="position:absolute; left:0; bottom:0; width:100%; border-radius:9px; background:${color}; height:${clamp(val,0,100)}%; transition:height 0.3s;"></span>
       <span class="stat-icon" style="position:relative; z-index:2; margin-top:4px; font-size:1.1em;">${getEmojiForStat(name)}</span>
       <span class="stat-value" style="position:relative; z-index:2; margin-bottom:4px; font-size:0.93em; color:#fff; font-weight:bold;">${Math.round(val)}</span>
@@ -762,12 +760,12 @@ function getEmojiForStat(name) {
     case "hambre": return "😋";
     case "felicidad": return "😊";
     case "energía": case "energia": return "⚡";
-    case "confianza": return "🤝";
+    case "confianza": return "🫝";
     case "vínculo": case "vinculo": return "💞";
     case "salud mental": return "🧠";
     case "salud física": case "salud fisica": return "💪";
     case "ansiedad": return "😰";
-    case "depresión": case "depresion": return "🥀";
+    case "depresión": case "depresion": return "🫀";
     default: return "🔹";
   }
 }
@@ -809,11 +807,11 @@ function renderStatOverlay() {
         <span>😋${Math.round(c.stats.hambre)}</span>
         <span>${getEstadoEmoji(c)}${Math.round(c.stats.felicidad)}</span>
         <span>⚡${Math.round(c.stats.energia)}</span>
-        <span>🤝${Math.round(c.vinculo)}</span>
+        <span>🫝${Math.round(c.vinculo)}</span>
         <span>🧠${Math.round(c.stats.saludMental)}</span>
         <span>💪${Math.round(c.stats.saludFisica)}</span>
         <span>😰${Math.round(c.ansiedad)}</span>
-        <span>🥀${Math.round(c.stats.depresion)}</span>
+        <span>🫀${Math.round(c.stats.depresion)}</span>
         <span style="margin-left:24px;">${fecha.str}</span>
       </div>
     `;
@@ -824,11 +822,11 @@ function renderStatOverlay() {
         <span>😋${Math.round(c.stats.hambre)}</span>
         <span>${getEstadoEmoji(c)}${Math.round(c.stats.felicidad)}</span>
         <span>⚡${Math.round(c.stats.energia)}</span>
-        <span>🤝${Math.round(c.vinculo)}</span>
+        <span>🫝${Math.round(c.vinculo)}</span>
         <span>🧠${Math.round(c.stats.saludMental)}</span>
         <span>💪${Math.round(c.stats.saludFisica)}</span>
         <span>😰${Math.round(c.ansiedad)}</span>
-        <span>🥀${Math.round(c.stats.depresion)}</span>
+        <span>🫀${Math.round(c.stats.depresion)}</span>
       </div>
       <div style="margin-top:6px;font-size:1.2em;text-align:center;">
         📅 <span style="font-size:1.13em;letter-spacing:.23em;">${diasLetras[fecha.jsDay]}</span>
@@ -1019,6 +1017,10 @@ function actualizarUI() {
   renderCriaturasPanel();
   renderStatOverlay();
   try { if (window.innerWidth <= 800 && window.renderStatVertical) window.renderStatVertical(); } catch(e){}
+  // NUEVO: actualizar barra móvil y menú móvil
+  try { 
+    if (window.innerWidth <= 800 && window.renderMobileObjetos) window.renderMobileObjetos(); 
+  } catch(e){}
 }
 
 // --- INACTIVIDAD ---
@@ -1064,22 +1066,71 @@ document.addEventListener("DOMContentLoaded", crearZoomUI);
 
 // --- BOTONES EXTRAS ---
 function crearBotonesExtra() {
-  let btnCris = document.createElement('button');
-  btnCris.id = "btn-cris";
-  btnCris.className = "floating-btn";
-  btnCris.textContent = "📞 Llamar a Cris";
-  btnCris.onclick = llamarACris;
-  document.body.appendChild(btnCris);
+  // Agrupamos los tres botones en una caja si es móvil
+  const isMobile = window.innerWidth <= 800;
+  if (isMobile) {
+    let cont = document.getElementById('mobile-btns-group');
+    if (!cont) {
+      cont = document.createElement('div');
+      cont.id = 'mobile-btns-group';
+      cont.style.position = "fixed";
+      cont.style.right = "14px";
+      cont.style.bottom = "18px";
+      cont.style.zIndex = 222;
+      cont.style.display = "flex";
+      cont.style.flexDirection = "column";
+      cont.style.alignItems = "flex-end";
+      cont.style.gap = "16px";
+      document.body.appendChild(cont);
+    }
+    // Botón Llamar a Cris
+    let btnCris = document.createElement('button');
+    btnCris.id = "btn-cris";
+    btnCris.className = "floating-btn";
+    btnCris.textContent = "📞 Cris";
+    btnCris.style.background = "#3f3c6b";
+    btnCris.onclick = llamarACris;
+    // Botón Música
+    let btnMusica = document.createElement('button');
+    btnMusica.id = "btn-musica";
+    btnMusica.className = "floating-btn";
+    btnMusica.textContent = "🎵 Música";
+    btnMusica.style.background = "#2196f3";
+    btnMusica.onclick = escucharMusica;
+    // Botón Mochila
+    let btnMochila = document.createElement('button');
+    btnMochila.id = "mobile-obj-btn";
+    btnMochila.className = "floating-btn";
+    btnMochila.innerHTML = "🎒 Mochila";
+    btnMochila.onclick = function() {
+      document.getElementById('mobile-obj-panel').classList.add('active');
+      if (window.renderMobileObjetos) window.renderMobileObjetos();
+    };
+    // Limpia antes de agregar
+    cont.innerHTML = "";
+    cont.appendChild(btnMochila);
+    cont.appendChild(btnCris);
+    cont.appendChild(btnMusica);
+  } else {
+    // Escritorio: igual que antes
+    let btnCris = document.createElement('button');
+    btnCris.id = "btn-cris";
+    btnCris.className = "floating-btn";
+    btnCris.textContent = "📞 Llamar a Cris";
+    btnCris.onclick = llamarACris;
+    document.body.appendChild(btnCris);
 
-  let btnMusica = document.createElement('button');
-  btnMusica.id = "btn-musica";
-  btnMusica.className = "floating-btn";
-  btnMusica.textContent = "🎵 Escuchar Música";
-  btnMusica.style.bottom = "90px";
-  btnMusica.onclick = escucharMusica;
-  document.body.appendChild(btnMusica);
+    let btnMusica = document.createElement('button');
+    btnMusica.id = "btn-musica";
+    btnMusica.className = "floating-btn";
+    btnMusica.textContent = "🎵 Escuchar Música";
+    btnMusica.style.bottom = "90px";
+    btnMusica.onclick = escucharMusica;
+    document.body.appendChild(btnMusica);
+  }
 }
 document.addEventListener("DOMContentLoaded", crearBotonesExtra);
+window.addEventListener('resize', crearBotonesExtra);
 
 // --- INICIO ---
 async function main() {
