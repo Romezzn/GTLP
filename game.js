@@ -1016,11 +1016,17 @@ function gameLoop(ts) {
 function actualizarUI() {
   renderCriaturasPanel();
   renderStatOverlay();
-  try { if (window.innerWidth <= 800 && window.renderStatVertical) window.renderStatVertical(); } catch(e){}
-  // NUEVO: actualizar barra móvil y menú móvil
-  try { 
-    if (window.innerWidth <= 800 && window.renderMobileObjetos) window.renderMobileObjetos(); 
-  } catch(e){}
+
+  // --- INTEGRACIÓN PARA MÓVIL ---
+  window.criaturas = criaturas;
+  window.CONFIG = CONFIG;
+  window.puedeUsarObjeto = puedeUsarObjeto;
+  window.usarObjeto = usarObjeto;
+
+  if (window.innerWidth <= 800) {
+    if (window.renderStatVertical) window.renderStatVertical();
+    if (window.renderMobileObjetos) window.renderMobileObjetos();
+  }
 }
 
 // --- INACTIVIDAD ---
@@ -1068,36 +1074,22 @@ document.addEventListener("DOMContentLoaded", crearZoomUI);
 function crearBotonesExtra() {
   // Agrupamos los tres botones en una caja si es móvil
   const isMobile = window.innerWidth <= 800;
+  let prevCont = document.getElementById('mobile-btns-group');
+  if (prevCont) prevCont.remove(); // Limpieza
   if (isMobile) {
-    let cont = document.getElementById('mobile-btns-group');
-    if (!cont) {
-      cont = document.createElement('div');
-      cont.id = 'mobile-btns-group';
-      cont.style.position = "fixed";
-      cont.style.right = "14px";
-      cont.style.bottom = "18px";
-      cont.style.zIndex = 222;
-      cont.style.display = "flex";
-      cont.style.flexDirection = "column";
-      cont.style.alignItems = "flex-end";
-      cont.style.gap = "16px";
-      document.body.appendChild(cont);
-    }
-    // Botón Llamar a Cris
-    let btnCris = document.createElement('button');
-    btnCris.id = "btn-cris";
-    btnCris.className = "floating-btn";
-    btnCris.textContent = "📞 Cris";
-    btnCris.style.background = "#3f3c6b";
-    btnCris.onclick = llamarACris;
-    // Botón Música
-    let btnMusica = document.createElement('button');
-    btnMusica.id = "btn-musica";
-    btnMusica.className = "floating-btn";
-    btnMusica.textContent = "🎵 Música";
-    btnMusica.style.background = "#2196f3";
-    btnMusica.onclick = escucharMusica;
-    // Botón Mochila
+    let cont = document.createElement('div');
+    cont.id = 'mobile-btns-group';
+    cont.style.position = "fixed";
+    cont.style.right = "14px";
+    cont.style.bottom = "18px";
+    cont.style.zIndex = 222;
+    cont.style.display = "flex";
+    cont.style.flexDirection = "column";
+    cont.style.alignItems = "flex-end";
+    cont.style.gap = "16px";
+    document.body.appendChild(cont);
+
+    // Botón Mochila (primero)
     let btnMochila = document.createElement('button');
     btnMochila.id = "mobile-obj-btn";
     btnMochila.className = "floating-btn";
@@ -1106,27 +1098,45 @@ function crearBotonesExtra() {
       document.getElementById('mobile-obj-panel').classList.add('active');
       if (window.renderMobileObjetos) window.renderMobileObjetos();
     };
-    // Limpia antes de agregar
-    cont.innerHTML = "";
     cont.appendChild(btnMochila);
-    cont.appendChild(btnCris);
-    cont.appendChild(btnMusica);
-  } else {
-    // Escritorio: igual que antes
+
+    // Botón Llamar a Cris
     let btnCris = document.createElement('button');
     btnCris.id = "btn-cris";
     btnCris.className = "floating-btn";
-    btnCris.textContent = "📞 Llamar a Cris";
+    btnCris.textContent = "📞 Cris";
+    btnCris.style.background = "#3f3c6b";
     btnCris.onclick = llamarACris;
-    document.body.appendChild(btnCris);
+    cont.appendChild(btnCris);
 
+    // Botón Música
     let btnMusica = document.createElement('button');
     btnMusica.id = "btn-musica";
     btnMusica.className = "floating-btn";
-    btnMusica.textContent = "🎵 Escuchar Música";
-    btnMusica.style.bottom = "90px";
+    btnMusica.textContent = "🎵 Música";
+    btnMusica.style.background = "#2196f3";
     btnMusica.onclick = escucharMusica;
-    document.body.appendChild(btnMusica);
+    cont.appendChild(btnMusica);
+  } else {
+    // Escritorio: igual que antes, pero evita duplicados
+    if (!document.getElementById('btn-cris')) {
+      let btnCris = document.createElement('button');
+      btnCris.id = "btn-cris";
+      btnCris.className = "floating-btn";
+      btnCris.textContent = "📞 Llamar a Cris";
+      btnCris.onclick = llamarACris;
+      document.body.appendChild(btnCris);
+    }
+
+    if (!document.getElementById('btn-musica')) {
+      let btnMusica = document.createElement('button');
+      btnMusica.id = "btn-musica";
+      btnMusica.className = "floating-btn";
+      btnMusica.textContent = "🎵 Escuchar Música";
+      btnMusica.style.bottom = "90px";
+      btnMusica.onclick = escucharMusica;
+      document.body.appendChild(btnMusica);
+    }
   }
 }
 document.addEventListener("DOMContentLoaded", crearBotonesExtra);
