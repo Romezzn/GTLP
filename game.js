@@ -1017,7 +1017,7 @@ function actualizarUI() {
   renderCriaturasPanel();
   renderStatOverlay();
 
-  // --- INTEGRACIÓN PARA MÓVIL ---
+  // Para integración móvil (NO BORRA NADA DE TU LÓGICA)
   window.criaturas = criaturas;
   window.CONFIG = CONFIG;
   window.puedeUsarObjeto = puedeUsarObjeto;
