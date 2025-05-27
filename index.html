@@ -380,79 +380,84 @@
   <script src="game.js"></script>
   <!-- UI móvil: stats barra vertical y menú objetos -->
   <script>
-    // Barra de stats vertical móvil - ahora a la IZQUIERDA y robusta para "cargando"
-    function renderStatVertical() {
-      const c = window.criaturas?.[0] || (window.CONFIG && window.CONFIG.personaje);
-      const el = document.getElementById('stat-vertical');
-      if (!el) return;
-      if (!c || !c.stats) {
-        el.innerHTML = '<div style="margin-top:2em;color:#fff;font-size:1.1em;">Cargando…</div>';
-        return;
-      }
-      el.innerHTML = [
-        { k:'hambre',     em:'😋', col:'#b3b703', lbl:'Ham', v:c.stats?.hambre || 0 },
-        { k:'felicidad',  em:'😊', col:'#f2c53d', lbl:'Feli', v:c.stats?.felicidad || 0 },
-        { k:'energia',    em:'⚡', col:'#19d5e4', lbl:'En', v:c.stats?.energia || 0 },
-        { k:'confianza',  em:'🤝', col:'#b39ddb', lbl:'Con', v:c.stats?.confianza || 0 },
-        { k:'vinculo',    em:'💞', col:'#ec6', lbl:'Vín', v:c.vinculo || 0 },
-        { k:'saludMental',em:'🧠', col:'#21e27b', lbl:'Ment', v:c.stats?.saludMental || 0 },
-        { k:'saludFisica',em:'💪', col:'#f58f3b', lbl:'Fís', v:c.stats?.saludFisica || 0 },
-        { k:'ansiedad',   em:'😰', col:'#e56', lbl:'Ans', v:c.ansiedad || 0 },
-        { k:'depresion',  em:'🥀', col:'#5a34a3', lbl:'Dep', v:c.stats?.depresion || 0 }
-      ].map(stat =>
-        `<div class="stat-mini" style="color:${stat.col}">
-          <span class="em">${stat.em}</span>
-          <span class="val">${Math.round(stat.v)}</span>
-          <span class="lbl">${stat.lbl}</span>
-        </div>`
-      ).join('');
-    }
-    // Menú de objetos móvil
-    function renderMobileObjetos() {
-      const panel = document.getElementById('mobile-obj-panel');
-      if (!panel) return;
-      panel.innerHTML = '<button onclick="document.getElementById(\'mobile-obj-panel\').classList.remove(\'active\')" style="position:absolute;top:24px;right:32px;font-size:2.2em;background:none;border:none;color:#fff;z-index:900;">✖️</button>';
-      if (!window.CONFIG || !window.criaturas) return;
-      const c = window.criaturas[0];
-      window.CONFIG.objetos.forEach(obj => {
-        let cooldown = c.cooldowns?.[obj.id] || 0;
-        let blocked = !window.puedeUsarObjeto ? false : !window.puedeUsarObjeto(c, obj);
-        let disabled = cooldown > 0 || blocked;
-        let btn = document.createElement('button');
-        btn.className = "objeto-boton-mobile";
-        btn.innerHTML = `<span style="font-size:1.5em">${obj.icon}</span> <span>${obj.name}</span>`;
-        btn.disabled = disabled;
-        btn.style.opacity = disabled ? 0.6 : 1;
-        btn.onclick = () => {
-          if (disabled) return;
-          document.getElementById('mobile-obj-panel').classList.remove('active');
-          if (window.usarObjeto) window.usarObjeto(c, obj, true);
-        };
-        panel.appendChild(btn);
-      });
-    }
-    // Mostrar/ocultar menú objetos móvil
-    function showMobileObjBtnIfNeeded() {
-      const btn = document.getElementById('mobile-obj-btn');
-      if (window.innerWidth <= 800) btn.style.display = 'flex';
-      else btn.style.display = 'none';
-    }
-    document.getElementById('mobile-obj-btn').onclick = () => {
-      document.getElementById('mobile-obj-panel').classList.add('active');
-      renderMobileObjetos();
-    };
-    window.renderStatVertical = renderStatVertical;
-    window.renderMobileObjetos = renderMobileObjetos;
-    window.addEventListener('resize', showMobileObjBtnIfNeeded);
-    window.addEventListener('DOMContentLoaded', showMobileObjBtnIfNeeded);
-    // Llama a renderStatVertical en cada UI update (hazlo desde game.js también)
-    function tryMobileUIUpdate() {
-      if (window.innerWidth <= 800) {
+function renderStatVertical() {
+  const c = window.criaturas?.[0] || (window.CONFIG && window.CONFIG.personaje);
+  const el = document.getElementById('stat-vertical');
+  if (!el) return;
+  if (!c || !c.stats) {
+    el.innerHTML = '<div style="margin-top:2em;color:#fff;font-size:1.1em;">Cargando…</div>';
+    return;
+  }
+  el.innerHTML = [
+    { k:'hambre',     em:'😋', col:'#b3b703', lbl:'Ham', v:c.stats?.hambre || 0 },
+    { k:'felicidad',  em:'😊', col:'#f2c53d', lbl:'Feli', v:c.stats?.felicidad || 0 },
+    { k:'energia',    em:'⚡', col:'#19d5e4', lbl:'En', v:c.stats?.energia || 0 },
+    { k:'confianza',  em:'🤝', col:'#b39ddb', lbl:'Con', v:c.stats?.confianza || 0 },
+    { k:'vinculo',    em:'💞', col:'#ec6', lbl:'Vín', v:c.vinculo || 0 },
+    { k:'saludMental',em:'🧠', col:'#21e27b', lbl:'Ment', v:c.stats?.saludMental || 0 },
+    { k:'saludFisica',em:'💪', col:'#f58f3b', lbl:'Fís', v:c.stats?.saludFisica || 0 },
+    { k:'ansiedad',   em:'😰', col:'#e56', lbl:'Ans', v:c.ansiedad || 0 },
+    { k:'depresion',  em:'🥀', col:'#5a34a3', lbl:'Dep', v:c.stats?.depresion || 0 }
+  ].map(stat =>
+    `<div class="stat-mini" style="color:${stat.col}">
+      <span class="em">${stat.em}</span>
+      <span class="val">${Math.round(stat.v)}</span>
+      <span class="lbl">${stat.lbl}</span>
+    </div>`
+  ).join('');
+}
+
+function renderMobileObjetos() {
+  const panel = document.getElementById('mobile-obj-panel');
+  if (!panel) return;
+  panel.innerHTML = '<button onclick="document.getElementById(\'mobile-obj-panel\').classList.remove(\'active\')" style="position:absolute;top:24px;right:32px;font-size:2.2em;background:none;border:none;color:#fff;z-index:900;">✖️</button>';
+  if (!window.CONFIG || !window.criaturas) return;
+  const c = window.criaturas[0];
+  window.CONFIG.objetos.forEach(obj => {
+    let cooldown = c.cooldowns?.[obj.id] || 0;
+    let blocked = !window.puedeUsarObjeto ? false : !window.puedeUsarObjeto(c, obj);
+    let disabled = cooldown > 0 || blocked;
+    let btn = document.createElement('button');
+    btn.className = "objeto-boton-mobile";
+    btn.innerHTML = `<span style="font-size:1.5em">${obj.icon}</span> <span>${obj.name}</span>`;
+    btn.disabled = disabled;
+    btn.style.opacity = disabled ? 0.6 : 1;
+    btn.onclick = () => {
+      if (disabled) return;
+      document.getElementById('mobile-obj-panel').classList.remove('active');
+      if (window.usarObjeto) window.usarObjeto(c, obj, true);
+      setTimeout(() => {
         renderStatVertical();
-      }
-    }
-    window.addEventListener('resize', tryMobileUIUpdate);
-    window.addEventListener('DOMContentLoaded', tryMobileUIUpdate);
+        renderMobileObjetos();
+      }, 100);
+    };
+    panel.appendChild(btn);
+  });
+}
+
+function showMobileObjBtnIfNeeded() {
+  const btn = document.getElementById('mobile-obj-btn');
+  if (window.innerWidth <= 800) btn.style.display = 'flex';
+  else btn.style.display = 'none';
+}
+
+document.getElementById('mobile-obj-btn').onclick = () => {
+  document.getElementById('mobile-obj-panel').classList.add('active');
+  renderMobileObjetos();
+};
+
+window.renderStatVertical = renderStatVertical;
+window.renderMobileObjetos = renderMobileObjetos;
+window.addEventListener('resize', showMobileObjBtnIfNeeded);
+window.addEventListener('DOMContentLoaded', showMobileObjBtnIfNeeded);
+function tryMobileUIUpdate() {
+  if (window.innerWidth <= 800) {
+    renderStatVertical();
+    renderMobileObjetos();
+  }
+}
+window.addEventListener('resize', tryMobileUIUpdate);
+window.addEventListener('DOMContentLoaded', tryMobileUIUpdate);
   </script>
 </body>
 </html>
